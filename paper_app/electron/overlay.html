@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mem Overlay</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: "Inter", "SF Pro Text", system-ui, sans-serif;
+      }
+
+      .container {
+        width: 56px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .button {
+        width: 56px;
+        height: 26px;
+        border-radius: 13px;
+        border: none;
+        cursor: pointer;
+        background: #6d28d9;
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        box-shadow: 0 6px 16px rgba(109, 40, 217, 0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
+
+      .button.saved {
+        background: #22c55e;
+      }
+
+      .button.loading {
+        background: #8b5cf6;
+      }
+
+      .spinner {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: white;
+        animation: spin 0.9s linear infinite;
+      }
+
+      .check {
+        width: 10px;
+        height: 7px;
+        border-left: 2px solid white;
+        border-bottom: 2px solid white;
+        transform: rotate(-45deg);
+        margin-top: -2px;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button class="button" id="mem-btn">Mem</button>
+    </div>
+    <script>
+      const button = document.getElementById("mem-btn")
+      const setContent = (state) => {
+        button.classList.remove("loading", "saved")
+        if (state === "loading") {
+          button.classList.add("loading")
+          button.innerHTML = '<span class="spinner"></span>'
+          return
+        }
+        if (state === "saved") {
+          button.classList.add("saved")
+          button.innerHTML = '<span class="check"></span>'
+          return
+        }
+        if (state === "fail") {
+          button.innerHTML = "Fail"
+          return
+        }
+        button.innerHTML = "Mem"
+      }
+
+      button.addEventListener("click", async () => {
+        button.disabled = true
+        setContent("loading")
+        const result = await window.overlayApi.save()
+        if (result && result.ok) {
+          setContent("saved")
+          setTimeout(() => {
+            window.overlayApi.hide()
+            setContent("idle")
+            button.disabled = false
+          }, 1000)
+        } else {
+          setContent("fail")
+          setTimeout(() => {
+            setContent("idle")
+            button.disabled = false
+          }, 900)
+        }
+      })
+    </script>
+  </body>
+</html>

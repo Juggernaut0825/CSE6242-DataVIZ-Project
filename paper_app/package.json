@@ -1,0 +1,27 @@
+{
+  "name": "paper_app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173",
+    "dev:electron": "wait-on tcp:5173 && electron .",
+    "build": "npm --prefix frontend run build",
+    "start": "electron .",
+    "postinstall": "electron-rebuild -f -w uiohook-napi"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^37.4.0",
+    "minio": "^8.0.6",
+    "uiohook-napi": "^1.5.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron-rebuild": "^3.2.9",
+    "wait-on": "^8.0.5"
+  }
+}

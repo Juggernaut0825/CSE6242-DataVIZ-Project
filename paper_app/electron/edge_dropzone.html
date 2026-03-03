@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edge Dropzone</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        user-select: none;
+        -webkit-app-region: no-drag;
+        overflow: hidden;
+      }
+
+      .edge-surface {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 0, 0, 0.35);
+        pointer-events: auto;
+        -webkit-app-region: no-drag;
+      }
+
+      .edge-surface.dragging {
+        background-color: rgba(0, 255, 0, 0.35);
+      }
+
+      .debug {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        font-size: 11px;
+        color: #111827;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 4px 6px;
+        border-radius: 6px;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="edge-surface" id="edge-surface"></div>
+    <div class="debug" id="debug">idle</div>
+    <script>
+      const surface = document.getElementById("edge-surface")
+      const debug = document.getElementById("debug")
+      const toPayloadFiles = (fileList) =>
+        Array.from(fileList || []).map((file) => ({
+          name: file.name,
+          path: file.path,
+        }))
+
+      let dragCounter = 0
+      let lastMouseAt = 0
+
+      const handleDragEnter = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        dragCounter += 1
+        surface.classList.add("dragging")
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "copy"
+          event.dataTransfer.effectAllowed = "copy"
+        }
+        debug.textContent = "dragenter"
+        window.edgeDropzoneApi.sendDragState({ isDragging: true })
+      }
+
+      const handleDragOver = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "copy"
+          event.dataTransfer.effectAllowed = "copy"
+        }
+        debug.textContent = "dragover"
+      }
+
+      const handleDragLeave = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        dragCounter = Math.max(0, dragCounter - 1)
+        if (dragCounter === 0) {
+          surface.classList.remove("dragging")
+          debug.textContent = "dragleave"
+          window.edgeDropzoneApi.sendDragState({ isDragging: false })
+        }
+      }
+
+      const handleDrop = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        dragCounter = 0
+        const files = toPayloadFiles(event.dataTransfer?.files)
+        surface.classList.remove("dragging")
+        debug.textContent = files.length ? "drop" : "drop (empty)"
+        window.edgeDropzoneApi.sendDragState({ isDragging: false })
+        if (files.length) {
+          window.edgeDropzoneApi.sendDropFiles({ files })
+        }
+      }
+
+      const handleMouseMove = (event) => {
+        const now = Date.now()
+        if (now - lastMouseAt < 200) {
+          return
+        }
+        lastMouseAt = now
+        debug.textContent = `move ${Math.round(event.clientX)},${Math.round(
+          event.clientY
+        )}`
+      }
+
+      window.addEventListener("dragenter", handleDragEnter, true)
+      window.addEventListener("dragover", handleDragOver, true)
+      window.addEventListener("dragleave", handleDragLeave, true)
+      window.addEventListener("drop", handleDrop, true)
+      window.addEventListener("mousemove", handleMouseMove, true)
+    </script>
+  </body>
+</html>

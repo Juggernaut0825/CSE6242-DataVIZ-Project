@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Memory Drop Zone</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Inter", "SF Pro Text", system-ui, sans-serif;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      .root {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+      }
+
+      .capsule {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(109, 40, 217, 0.85);
+        box-shadow: 0 10px 30px rgba(109, 40, 217, 0.35);
+        transition: all 0.2s ease;
+      }
+
+      .capsule:hover {
+        background: rgba(124, 58, 237, 0.95);
+      }
+
+      .panel {
+        width: 100%;
+        height: 100%;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 24px 50px rgba(15, 23, 42, 0.18);
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        box-sizing: border-box;
+        backdrop-filter: blur(16px);
+      }
+
+      .panel.dragging {
+        border: 2px dashed rgba(109, 40, 217, 0.6);
+        background: rgba(255, 255, 255, 0.96);
+      }
+
+      .title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: #475569;
+        line-height: 1.5;
+      }
+
+      .hint.warning {
+        color: #dc2626;
+      }
+
+      .list {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .item {
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .file-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+      }
+
+      .status {
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .status.error {
+        color: #dc2626;
+      }
+
+      .status.success {
+        color: #16a34a;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.25);
+        overflow: hidden;
+      }
+
+      .progress-bar span {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #8b5cf6, #6366f1);
+        transition: width 0.2s ease;
+      }
+
+      .progress-bar.error span {
+        background: linear-gradient(90deg, #f97316, #ef4444);
+      }
+
+      .progress-bar.success span {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+      }
+
+      .empty {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 12px;
+      }
+
+      .drop-area {
+        margin-top: 12px;
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .action-row {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .pick-btn {
+        border: none;
+        background: rgba(109, 40, 217, 0.12);
+        color: #4c1d95;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+
+      .pick-btn:hover {
+        background: rgba(109, 40, 217, 0.2);
+      }
+
+      .close-btn {
+        margin-top: auto;
+        align-self: flex-end;
+        border: none;
+        background: rgba(148, 163, 184, 0.2);
+        color: #475569;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+
+      .close-btn:hover {
+        background: rgba(148, 163, 184, 0.35);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="root" id="root"></div>
+    <script>
+      const root = document.getElementById("root")
+      const state = {
+        mode: "idle",
+        activeProjectId: "",
+        items: [],
+        warningMessage: "",
+        shrinkTimer: null,
+        isPinned: false,
+      }
+
+      const allowedExtensions = ["pdf", "md", "markdown", "png", "jpg", "jpeg", "webp"]
+
+      const isAllowedFile = (file) => {
+        const name = file?.name || ""
+        const ext = name.split(".").pop().toLowerCase()
+        return allowedExtensions.includes(ext)
+      }
+
+      const ensureMode = (mode) => {
+        if (state.mode === mode) {
+          return
+        }
+        state.mode = mode
+        if (mode === "idle") {
+          window.dropzoneApi.resize({ width: 32, height: 32 })
+        } else {
+          window.dropzoneApi.resize({ width: 300, height: 400 })
+        }
+        render()
+      }
+
+      const scheduleShrink = () => {
+        if (state.shrinkTimer) {
+          clearTimeout(state.shrinkTimer)
+        }
+        state.shrinkTimer = setTimeout(() => {
+          if (state.items.length === 0 && !state.isPinned) {
+            ensureMode("idle")
+          }
+        }, 2000)
+      }
+
+      const render = () => {
+        if (state.mode === "idle") {
+          root.innerHTML = '<div class="capsule"></div>'
+          return
+        }
+
+        const isDragging = state.mode === "dragging"
+        const hintText = state.warningMessage || "拖拽至此存入记忆"
+        const hintClass = state.warningMessage ? "hint warning" : "hint"
+        const listItems = state.items
+          .map((item) => {
+            const progress = Math.round(item.progress || 0)
+            const statusClass =
+              item.status === "error"
+                ? "status error"
+                : item.status === "success"
+                ? "status success"
+                : "status"
+            const statusText =
+              item.status === "queued"
+                ? "等待中..."
+                : item.status === "uploading"
+                ? "上传中..."
+                : item.status === "uploaded"
+                ? "等待处理..."
+                : item.status === "processing"
+                ? progress >= 95
+                  ? "正在深度解析..."
+                  : "解析中..."
+                : item.status === "success"
+                ? "完成"
+                : item.status === "error"
+                ? "处理失败"
+                : ""
+
+            const barClass =
+              item.status === "error"
+                ? "progress-bar error"
+                : item.status === "success"
+                ? "progress-bar success"
+                : "progress-bar"
+
+            return `
+              <div class="item">
+                <div class="item-header">
+                  <div class="file-name">${item.name}</div>
+                  <div class="${statusClass}">${statusText}</div>
+                </div>
+                <div class="${barClass}">
+                  <span style="width: ${progress}%;"></span>
+                </div>
+              </div>
+            `
+          })
+          .join("")
+
+        root.innerHTML = `
+          <div class="panel ${isDragging ? "dragging" : ""}">
+            <div class="title">记忆胶囊</div>
+            <div class="${hintClass}">${hintText}</div>
+            ${
+              state.items.length
+                ? `<div class="list">${listItems}</div>`
+                : '<div class="drop-area">点击选择文件上传</div>'
+            }
+            <div class="action-row">
+              <button class="pick-btn" type="button">选择文件</button>
+            </div>
+            <button class="close-btn" type="button">收起</button>
+          </div>
+        `
+      }
+
+      const updateProjectId = (projectId) => {
+        state.activeProjectId = projectId || ""
+        state.warningMessage = ""
+        render()
+      }
+
+      const normalizeFiles = (files) =>
+        files
+          .filter((file) => file && file.name && file.path)
+          .map((file) => ({
+            name: file.name,
+            path: file.path,
+          }))
+
+      const addItems = (files) => {
+        const normalized = normalizeFiles(files)
+        const newItems = normalized.map((file) => ({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          file,
+          name: file.name,
+          path: file.path,
+          status: "queued",
+          progress: 0,
+          timer: null,
+          minioUrl: "",
+          httpUrl: "",
+        }))
+        state.items.push(...newItems)
+        render()
+        newItems.forEach((item) => uploadItem(item))
+      }
+
+      const uploadItem = async (item) => {
+        item.status = "uploading"
+        render()
+        const result = await window.dropzoneApi.uploadFile({
+          filePath: item.path,
+          projectId: state.activeProjectId,
+        })
+        if (!result?.ok) {
+          window.dropzoneApi.logError({
+            stage: "upload",
+            file: item.name,
+            error: result?.error || "upload_failed",
+          })
+          item.status = "error"
+          item.progress = 100
+          render()
+          return
+        }
+        item.minioUrl = result.minioUrl
+        item.httpUrl = result.httpUrl
+        item.status = "uploaded"
+        render()
+        processQueue()
+      }
+
+      const startFakeProgress = (item) => {
+        const startTime = Date.now()
+        if (item.timer) {
+          clearInterval(item.timer)
+        }
+        item.timer = setInterval(() => {
+          const elapsed = (Date.now() - startTime) / 1000
+          const next = Math.min(95, (elapsed / 60) * 95)
+          if (item.status !== "processing") {
+            clearInterval(item.timer)
+            item.timer = null
+            return
+          }
+          item.progress = Math.max(item.progress, next)
+          render()
+        }, 500)
+      }
+
+      const finishItem = (item, isSuccess) => {
+        if (item.timer) {
+          clearInterval(item.timer)
+          item.timer = null
+        }
+        if (isSuccess) {
+          item.status = "success"
+          item.progress = 100
+          render()
+          setTimeout(() => {
+            state.items = state.items.filter((entry) => entry.id !== item.id)
+            render()
+            processQueue()
+            if (state.items.length === 0) {
+              scheduleShrink()
+            }
+          }, 1000)
+        } else {
+          item.status = "error"
+          item.progress = Math.max(item.progress, 95)
+          render()
+        }
+      }
+
+      const processQueue = () => {
+        if (state.items.some((item) => item.status === "processing")) {
+          return
+        }
+        const next = state.items.find((item) => item.status === "uploaded")
+        if (!next) {
+          return
+        }
+        next.status = "processing"
+        next.progress = 0
+        render()
+        startFakeProgress(next)
+        fetch("http://43.139.19.144:8001/api/v1/process_and_extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            minio_url: next.httpUrl || next.minioUrl,
+            project_id: state.activeProjectId,
+            enable_vlm: true,
+          }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.text().then((body) => {
+                window.dropzoneApi.logError({
+                  stage: "process_and_extract",
+                  status: response.status,
+                  body,
+                  file: next.name,
+                })
+                throw new Error("bad_response")
+              })
+            }
+            return response.json().catch(() => ({}))
+          })
+          .then(() => {
+            const current = state.items.find((item) => item.id === next.id)
+            if (current) {
+              finishItem(current, true)
+            }
+          })
+          .catch((error) => {
+            window.dropzoneApi.logError({
+              stage: "process_and_extract",
+              file: next.name,
+              error: error?.message || error,
+            })
+            const current = state.items.find((item) => item.id === next.id)
+            if (current) {
+              finishItem(current, false)
+            }
+          })
+      }
+
+      const handleDrop = (files) => {
+        if (!state.activeProjectId) {
+          state.warningMessage = "请先在主程序选择项目"
+          render()
+          return
+        }
+        const validFiles = files.filter((file) => isAllowedFile(file))
+        if (!validFiles.length) {
+          state.warningMessage = "仅支持 PDF、MD、图片文件"
+          render()
+          return
+        }
+        state.warningMessage = ""
+        ensureMode("processing")
+        addItems(validFiles)
+      }
+
+      const handleFilePaths = (paths) => {
+        const files = paths.map((filePath) => ({
+          name: filePath.split("/").pop() || filePath,
+          path: filePath,
+        }))
+        handleDrop(files)
+      }
+
+
+      const boot = async () => {
+        const result = await window.dropzoneApi.getProjectId()
+        updateProjectId(result?.projectId || "")
+        window.dropzoneApi.onProjectChange(updateProjectId)
+        root.addEventListener("click", (event) => {
+          const target = event.target
+          if (target?.closest?.(".capsule")) {
+            state.isPinned = true
+            state.warningMessage = state.activeProjectId
+              ? ""
+              : "请先在主程序选择项目"
+            ensureMode("dragging")
+          }
+          if (target?.closest?.(".close-btn")) {
+            state.isPinned = false
+            const hasProcessing = state.items.some(
+              (item) => item.status === "processing"
+            )
+            if (!hasProcessing) {
+              ensureMode("idle")
+            }
+          }
+          if (target?.closest?.(".pick-btn")) {
+            window.dropzoneApi.pickFiles().then((result) => {
+              if (result?.ok && Array.isArray(result.files)) {
+                handleFilePaths(result.files)
+              }
+            })
+          }
+        })
+        render()
+      }
+
+      boot()
+    </script>
+  </body>
+</html>

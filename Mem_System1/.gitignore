@@ -1,0 +1,102 @@
+# ============================================
+# 只保留核心文件，忽略其他所有内容
+# ============================================
+
+# 默认忽略所有文件和文件夹
+/*
+
+# 白名单：明确保留的文件和文件夹
+!/.gitignore
+!/GauzRag/
+!/run_api.py
+!/requirements.txt
+!/README.md
+!/.env.example
+
+# ============================================
+# GauzRag/ 目录内的忽略规则
+# ============================================
+
+# Python 缓存
+GauzRag/__pycache__/
+GauzRag/**/__pycache__/
+GauzRag/**/*.pyc
+GauzRag/**/*.pyo
+GauzRag/**/*.pyd
+
+# ============================================
+# 系统和 IDE 文件
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# ============================================
+# 敏感信息和本地配置
+# ============================================
+
+# 环境变量（真实的 API 密钥等）
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# 数据和输出文件
+# ============================================
+
+# 数据库和存储
+neo4j_data/
+neo4j_logs/
+qdrant_storage/
+*.db
+*.sqlite
+*.sqlite3
+
+# 输出和结果
+output/
+results/
+logs/
+cache/
+wrong_questions/
+wrong_questions_all/
+
+# 训练数据
+locomo/
+MemoryOS/
+
+# 临时文件
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ============================================
+# 其他
+# ============================================
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# 测试文件
+test_*.py
+*_test.py
