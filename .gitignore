@@ -28,6 +28,9 @@ dist/
 build/
 *.egg-info/
 
+# PDFs
+*.pdf
+
 # Logs
 *.log
 logs/
