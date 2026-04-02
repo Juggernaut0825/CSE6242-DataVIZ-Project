@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
+import time
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 import networkx as nx
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 RELATION_TYPES = {
@@ -67,6 +72,34 @@ class GraphService:
             settings.neo4j_uri,
             auth=(settings.neo4j_user, settings.neo4j_password),
         )
+
+    def wait_for_neo4j(self, max_wait_seconds: int = 90, initial_interval: float = 0.5) -> None:
+        deadline = time.monotonic() + max_wait_seconds
+        interval = initial_interval
+        last_exc: Optional[Exception] = None
+        while time.monotonic() < deadline:
+            try:
+                self.driver.verify_connectivity()
+                return
+            except (ServiceUnavailable, OSError) as exc:
+                last_exc = exc
+                logger.warning(
+                    "Neo4j not reachable at %s (%s). Retrying in %.1fs…",
+                    settings.neo4j_uri,
+                    type(exc).__name__,
+                    interval,
+                )
+                time.sleep(interval)
+                interval = min(interval * 1.4, 4.0)
+
+        hint = (
+            f"Could not connect to Neo4j at {settings.neo4j_uri} within the startup wait window.\n\n"
+            "Fix:\n"
+            "  1) Open Docker Desktop and wait until it is running.\n"
+            "  2) From the project repository root, run:  docker compose up -d\n"
+            "  3) Default Bolt port is 7687.\n"
+        )
+        raise RuntimeError(hint + f"\nLast error: {last_exc}") from last_exc
 
     def ensure_schema(self) -> None:
         statements = [

@@ -56,6 +56,7 @@ def get_db() -> Generator[Session, None, None]:
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
+    graph_service.wait_for_neo4j()
     graph_service.ensure_schema()
 
 

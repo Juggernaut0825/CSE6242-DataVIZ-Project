@@ -41,6 +41,47 @@ const citationDisplayText = (search, citation) => {
   return matchedUnit?.text || citation.summary || ""
 }
 
+/** Nodes/edges involved in retrieval: query + memory units + one-hop neighbors in the overlay subgraph. */
+const computeRetrievalHighlight = (payload) => {
+  const overlay = payload?.overlay
+  if (!overlay?.nodes?.length) {
+    return null
+  }
+  const unitIds = new Set((payload.retrieved_units || []).map((u) => u.id))
+  const queryNode = (overlay.nodes || []).find(
+    (n) => n.kind === "query" || String(n.id).startsWith("query:")
+  )
+  const core = new Set(unitIds)
+  if (queryNode?.id) {
+    core.add(queryNode.id)
+  }
+  const nodeIds = new Set(core)
+  const edgeIds = new Set()
+  for (const edge of overlay.edges || []) {
+    if (core.has(edge.source) || core.has(edge.target)) {
+      if (edge.id) {
+        edgeIds.add(edge.id)
+      }
+      nodeIds.add(edge.source)
+      nodeIds.add(edge.target)
+    }
+  }
+  return { nodeIds: Array.from(nodeIds), edgeIds: Array.from(edgeIds) }
+}
+
+/** Node ids to zoom onto when expanding Evidence (query + retrieved memory units). */
+const computeEvidenceFitNodeIds = (search) => {
+  if (!search?.overlay?.nodes) {
+    return []
+  }
+  const unitIds = (search.retrieved_units || []).map((u) => u.id).filter(Boolean)
+  const queryNode = (search.overlay.nodes || []).find(
+    (n) => n.kind === "query" || String(n.id).startsWith("query:")
+  )
+  const ids = queryNode?.id ? [queryNode.id, ...unitIds] : [...unitIds]
+  return [...new Set(ids)]
+}
+
 const tooltipElement = (value) => {
   if (!value || typeof document === "undefined") {
     return value || ""
@@ -53,6 +94,8 @@ const tooltipElement = (value) => {
   container.textContent = value
   return container
 }
+
+const EMPTY_PINNED = []
 
 const zoomBucketFromScale = (scale) => {
   if (scale < 0.45) {
@@ -70,7 +113,7 @@ const zoomBucketFromScale = (scale) => {
   return 4
 }
 
-const buildSemanticZoomGraph = (graph, zoomBucket) => {
+const buildSemanticZoomGraph = (graph, zoomBucket, pinnedNodeIds = []) => {
   if (!graph?.nodes?.length) {
     return graph
   }
@@ -92,6 +135,16 @@ const buildSemanticZoomGraph = (graph, zoomBucket) => {
   }
 
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]))
+  const pinnedInGraph = new Set()
+  for (const id of pinnedNodeIds || []) {
+    if (nodeMap.has(id)) {
+      pinnedInGraph.add(id)
+    }
+  }
+  const effectiveBudget = pinnedInGraph.size
+    ? Math.max(nodeBudget, pinnedInGraph.size + 8)
+    : nodeBudget
+
   const degreeMap = new Map(graph.nodes.map((node) => [node.id, 0]))
   for (const edge of graph.edges || []) {
     degreeMap.set(edge.source, (degreeMap.get(edge.source) || 0) + 1)
@@ -124,13 +177,16 @@ const buildSemanticZoomGraph = (graph, zoomBucket) => {
   })
 
   const selected = new Set()
+  for (const id of pinnedInGraph) {
+    selected.add(id)
+  }
   for (const node of rankedNodes) {
     if (node.kind === "query") {
       selected.add(node.id)
     }
   }
 
-  const targetCore = Math.max(5, Math.floor(nodeBudget * 0.5))
+  const targetCore = Math.max(5, Math.floor(effectiveBudget * 0.5))
   for (const node of rankedNodes) {
     if (selected.size >= targetCore) {
       break
@@ -165,19 +221,19 @@ const buildSemanticZoomGraph = (graph, zoomBucket) => {
     .sort((left, right) => right.score - left.score)
 
   for (const { edge } of bridgeCandidates) {
-    if (selected.size >= nodeBudget) {
+    if (selected.size >= effectiveBudget) {
       break
     }
     if (selected.has(edge.source) || selected.has(edge.target)) {
       selected.add(edge.source)
-      if (selected.size < nodeBudget) {
+      if (selected.size < effectiveBudget) {
         selected.add(edge.target)
       }
     }
   }
 
   for (const node of rankedNodes) {
-    if (selected.size >= nodeBudget) {
+    if (selected.size >= effectiveBudget) {
       break
     }
     selected.add(node.id)
@@ -219,6 +275,8 @@ const buildSemanticZoomGraph = (graph, zoomBucket) => {
       ...(graph.meta || {}),
       zoom_bucket: zoomBucket,
       node_budget: nodeBudget,
+      effective_node_budget: effectiveBudget,
+      pinned_retrieval_nodes: pinnedInGraph.size,
     },
   }
 }
@@ -229,6 +287,7 @@ function App() {
   const graphViewportRef = useRef({ scale: 1, position: null })
   const zoomBucketRef = useRef(2)
   const chatScrollRef = useRef(null)
+  const pendingEvidenceFitRef = useRef(null)
 
   const [projects, setProjects] = useState([])
   const [chatSessions, setChatSessions] = useState([])
@@ -240,7 +299,7 @@ function App() {
   const [loadingProjects, setLoadingProjects] = useState(false)
   const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [graphMode, setGraphMode] = useState("live")
+  const [graphMode, setGraphMode] = useState("global")
   const [graphView] = useState("macro")
   const [globalGraph, setGlobalGraph] = useState(null)
   const [liveGraph, setLiveGraph] = useState(null)
@@ -251,6 +310,8 @@ function App() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
   const [showLegend, setShowLegend] = useState(false)
+  const [retrievalHighlight, setRetrievalHighlight] = useState(null)
+  const [evidenceExpandedMessageId, setEvidenceExpandedMessageId] = useState(null)
 
   const activeSession = useMemo(
     () => chatSessions.find((session) => session.id === activeSessionId),
@@ -258,9 +319,19 @@ function App() {
   )
 
   const visibleGraph = graphMode === "live" && liveGraph ? liveGraph : globalGraph
+  const pinnedForZoom = retrievalHighlight?.nodeIds ?? EMPTY_PINNED
+  const retrievalNodeSet = useMemo(
+    () => new Set(retrievalHighlight?.nodeIds || []),
+    [retrievalHighlight]
+  )
+  const retrievalEdgeSet = useMemo(
+    () => new Set(retrievalHighlight?.edgeIds || []),
+    [retrievalHighlight]
+  )
+
   const zoomedGraph = useMemo(
-    () => buildSemanticZoomGraph(visibleGraph, zoomBucket),
-    [visibleGraph, zoomBucket]
+    () => buildSemanticZoomGraph(visibleGraph, zoomBucket, pinnedForZoom),
+    [visibleGraph, zoomBucket, pinnedForZoom]
   )
 
   const loadProjects = useCallback(async () => {
@@ -352,7 +423,11 @@ function App() {
       }))
     )
     setActiveSessionId(activated.id)
+    setGraphMode("global")
     setLiveGraph(null)
+    setRetrievalHighlight(null)
+    setEvidenceExpandedMessageId(null)
+    pendingEvidenceFitRef.current = null
   }, [])
 
   const loadMessages = useCallback(async (projectId, sessionId) => {
@@ -428,6 +503,9 @@ function App() {
           setMessages([])
           setGlobalGraph(null)
           setLiveGraph(null)
+          setRetrievalHighlight(null)
+          setEvidenceExpandedMessageId(null)
+          pendingEvidenceFitRef.current = null
         }
         return nextProjects
       })
@@ -454,6 +532,9 @@ function App() {
         setActiveSessionId(payload.next_session_id || "")
         setMessages([])
         setLiveGraph(null)
+        setRetrievalHighlight(null)
+        setEvidenceExpandedMessageId(null)
+        pendingEvidenceFitRef.current = null
       }
       await Promise.all([
         loadChatSessions(activeProjectId),
@@ -468,8 +549,6 @@ function App() {
     if (!activeProjectId) {
       return
     }
-    setGraphMode("global")
-    setLiveGraph(null)
     await loadGraph(activeProjectId, graphView)
   }, [activeProjectId, graphView, loadGraph])
 
@@ -485,7 +564,11 @@ function App() {
       window.paperMem.setActiveProjectId(activeProjectId)
     }
     setActiveSessionId("")
+    setGraphMode("global")
     setLiveGraph(null)
+    setRetrievalHighlight(null)
+    setEvidenceExpandedMessageId(null)
+    pendingEvidenceFitRef.current = null
     loadChatSessions(activeProjectId)
     loadGraph(activeProjectId, graphView)
   }, [activeProjectId, graphView, loadChatSessions, loadGraph])
@@ -520,6 +603,9 @@ function App() {
       }
       setGraphMode("global")
       setLiveGraph(null)
+      setRetrievalHighlight(null)
+      setEvidenceExpandedMessageId(null)
+      pendingEvidenceFitRef.current = null
       loadGraph(payload.projectId, graphView)
     })
     return () => {
@@ -532,10 +618,32 @@ function App() {
   }, [zoomBucket])
 
   useEffect(() => {
+    if (!evidenceExpandedMessageId) {
+      return
+    }
+    if (messages.some((m) => m.id === evidenceExpandedMessageId)) {
+      return
+    }
+    const withOverlay = messages.filter((m) => m.role === "assistant" && m.search?.overlay)
+    if (withOverlay.length === 1) {
+      setEvidenceExpandedMessageId(withOverlay[0].id)
+      return
+    }
+    setEvidenceExpandedMessageId(null)
+    setGraphMode("global")
+    setLiveGraph(null)
+    setRetrievalHighlight(null)
+    pendingEvidenceFitRef.current = null
+  }, [messages, evidenceExpandedMessageId])
+
+  useEffect(() => {
+    if (evidenceExpandedMessageId) {
+      return
+    }
     graphViewportRef.current = { scale: 1, position: null }
     setZoomBucket(2)
     setSelectedGraphNode(null)
-  }, [activeProjectId, activeSessionId, graphMode, visibleGraph?.meta?.query])
+  }, [activeProjectId, activeSessionId, graphMode, evidenceExpandedMessageId])
 
   useEffect(() => {
     if (!graphContainerRef.current || !zoomedGraph) {
@@ -557,23 +665,52 @@ function App() {
       file_chunk: "#ec4899",
     }
 
+    const evidenceDimActive = Boolean(retrievalHighlight?.nodeIds?.length)
+
     const nodes = (zoomedGraph.nodes || []).map((node) => {
       const color = palette[node.kind] || "#94a3b8"
       const localImportance = Number(node.local_importance || node.score || 0)
       const fullText =
         node.detail?.full_text || node.detail?.text || node.detail?.query || node.label || node.id
+      const retrievalHl = retrievalNodeSet.has(node.id)
+      const dimmed = evidenceDimActive && !retrievalHl
+      if (dimmed) {
+        return {
+          id: node.id,
+          label: truncate(node.label || node.id, 28),
+          title: tooltipElement(fullText),
+          shape: node.kind === "query" ? "star" : "dot",
+          size: Math.max(8, (node.kind === "query" ? 28 : 14 + Math.min(20, localImportance * 8)) * 0.75),
+          opacity: 0.28,
+          borderWidth: 1,
+          color: {
+            background: "#e2e8f0",
+            border: "#cbd5e1",
+            highlight: {
+              background: "#e2e8f0",
+              border: "#94a3b8",
+            },
+          },
+          font: {
+            color: "#94a3b8",
+            size: 11,
+            face: "Inter, SF Pro Text, system-ui, sans-serif",
+          },
+        }
+      }
       return {
         id: node.id,
         label: truncate(node.label || node.id, 28),
         title: tooltipElement(fullText),
         shape: node.kind === "query" ? "star" : "dot",
         size: node.kind === "query" ? 28 : 14 + Math.min(20, localImportance * 8),
+        borderWidth: retrievalHl ? 3 : 1,
         color: {
           background: color,
-          border: color,
+          border: retrievalHl ? "#eab308" : color,
           highlight: {
             background: color,
-            border: "#0f172a",
+            border: retrievalHl ? "#ca8a04" : "#0f172a",
           },
         },
         font: {
@@ -584,17 +721,27 @@ function App() {
       }
     })
 
-    const edges = (zoomedGraph.edges || []).map((edge) => ({
-      id: edge.id,
-      from: edge.source,
-      to: edge.target,
-      label: zoomBucket >= 3 ? edge.type : "",
-      arrows: "to",
-      width: Math.max(1.2, edge.weight || 1),
-      color: { color: "#cbd5e1", highlight: "#475569" },
-      font: { color: "#64748b", size: 10, align: "middle" },
-      smooth: { enabled: true, type: "dynamic" },
-    }))
+    const edges = (zoomedGraph.edges || []).map((edge) => {
+      const baseWidth = Math.max(1.2, edge.weight || 1)
+      const retrievalHl = retrievalEdgeSet.has(edge.id)
+      const dimmed = evidenceDimActive && !retrievalHl
+      return {
+        id: edge.id,
+        from: edge.source,
+        to: edge.target,
+        label: zoomBucket >= 3 ? edge.type : "",
+        arrows: "to",
+        width: dimmed ? Math.max(0.6, baseWidth * 0.45) : retrievalHl ? Math.max(3, baseWidth + 1.2) : baseWidth,
+        color: dimmed
+          ? { color: "#e2e8f0", highlight: "#cbd5e1" }
+          : retrievalHl
+          ? { color: "#eab308", highlight: "#ca8a04" }
+          : { color: "#cbd5e1", highlight: "#475569" },
+        font: { color: dimmed ? "#cbd5e1" : "#64748b", size: 10, align: "middle" },
+        smooth: { enabled: true, type: "dynamic" },
+        opacity: dimmed ? 0.35 : 1,
+      }
+    })
 
     let network = null
     try {
@@ -625,13 +772,36 @@ function App() {
       return
     }
 
-    const currentViewport = graphViewportRef.current
-    if (currentViewport.position || currentViewport.scale !== 1) {
-      network.moveTo({
-        position: currentViewport.position || undefined,
-        scale: currentViewport.scale || 1,
-        animation: false,
-      })
+    const fitTargetIds = pendingEvidenceFitRef.current
+    pendingEvidenceFitRef.current = null
+    const visNodeIdSet = new Set(nodes.map((n) => n.id))
+    const fitPresent =
+      fitTargetIds?.length > 0 ? fitTargetIds.filter((id) => visNodeIdSet.has(id)) : []
+
+    if (fitPresent.length) {
+      window.setTimeout(() => {
+        try {
+          network.fit({
+            nodes: fitPresent,
+            animation: { duration: 480 },
+          })
+          graphViewportRef.current = {
+            scale: network.getScale(),
+            position: network.getViewPosition(),
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 160)
+    } else {
+      const currentViewport = graphViewportRef.current
+      if (currentViewport.position || currentViewport.scale !== 1) {
+        network.moveTo({
+          position: currentViewport.position || undefined,
+          scale: currentViewport.scale || 1,
+          animation: false,
+        })
+      }
     }
 
     network.on("zoom", (params) => {
@@ -680,7 +850,7 @@ function App() {
       network?.destroy()
       graphNetworkRef.current = null
     }
-  }, [zoomBucket, zoomedGraph])
+  }, [zoomBucket, zoomedGraph, retrievalNodeSet, retrievalEdgeSet, retrievalHighlight])
 
   const createProject = async (name) => {
     const trimmedName = (name || "").trim()
@@ -716,6 +886,9 @@ function App() {
       setMessages([])
       setGraphMode("global")
       setLiveGraph(null)
+      setRetrievalHighlight(null)
+      setEvidenceExpandedMessageId(null)
+      pendingEvidenceFitRef.current = null
     }
   }
 
@@ -739,7 +912,11 @@ function App() {
     const assistantId = makeId()
     setInput("")
     setSending(true)
-    setGraphMode("live")
+    setEvidenceExpandedMessageId(null)
+    setGraphMode("global")
+    setLiveGraph(null)
+    setRetrievalHighlight(null)
+    pendingEvidenceFitRef.current = null
     setMessages((prev) => [
       ...prev,
       { id: makeId(), role: "user", content: query },
@@ -791,7 +968,6 @@ function App() {
 
           if (parsed.type === "search") {
             updateAssistantMessage(assistantId, { search: parsed.payload })
-            setLiveGraph(parsed.payload?.overlay || null)
           } else if (parsed.type === "reasoning") {
             setMessages((prev) =>
               prev.map((message) =>
@@ -859,7 +1035,35 @@ function App() {
           </div>
         ) : null}
         {!isUser && message.search?.citations?.length ? (
-          <details className="mt-3 rounded-2xl bg-emerald-50 p-3">
+          <details
+            className="mt-3 rounded-2xl bg-emerald-50 p-3"
+            open={evidenceExpandedMessageId === message.id}
+            onToggle={(e) => {
+              const nextOpen = e.target.open
+              if (nextOpen) {
+                setEvidenceExpandedMessageId(message.id)
+                if (message.search?.overlay) {
+                  setGraphMode("live")
+                  setLiveGraph(message.search.overlay)
+                  setRetrievalHighlight(computeRetrievalHighlight(message.search))
+                  pendingEvidenceFitRef.current = computeEvidenceFitNodeIds(message.search)
+                } else {
+                  setGraphMode("global")
+                  setLiveGraph(null)
+                  setRetrievalHighlight(null)
+                  pendingEvidenceFitRef.current = null
+                }
+              } else if (evidenceExpandedMessageId === message.id) {
+                setEvidenceExpandedMessageId(null)
+                if (message.search?.overlay) {
+                  setGraphMode("global")
+                  setLiveGraph(null)
+                  setRetrievalHighlight(null)
+                  pendingEvidenceFitRef.current = null
+                }
+              }
+            }}
+          >
             <summary className="cursor-pointer text-xs font-medium text-emerald-700">
               {`Evidence (${message.search.citations.length})`}
             </summary>
