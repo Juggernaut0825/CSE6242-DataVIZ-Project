@@ -29,16 +29,45 @@
       }
 
       .capsule {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: rgba(109, 40, 217, 0.85);
-        box-shadow: 0 10px 30px rgba(109, 40, 217, 0.35);
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.96), rgba(109, 40, 217, 0.92));
+        box-shadow: 0 12px 30px rgba(109, 40, 217, 0.32);
         transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
       }
 
       .capsule:hover {
-        background: rgba(124, 58, 237, 0.95);
+        transform: translateY(-1px) scale(1.03);
+        box-shadow: 0 16px 34px rgba(109, 40, 217, 0.4);
+      }
+
+      .capsule::before {
+        content: "";
+        width: 14px;
+        height: 14px;
+        border-left: 2.5px solid #ffffff;
+        border-top: 2.5px solid #ffffff;
+        transform: rotate(45deg) translateY(2px);
+        margin-top: 3px;
+        box-sizing: border-box;
+      }
+
+      .capsule::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 6px;
+        border: 2.5px solid #ffffff;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        bottom: 9px;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       .panel {
@@ -93,6 +122,7 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
+        position: relative;
       }
 
       .item-header {
@@ -123,6 +153,34 @@
 
       .status.success {
         color: #16a34a;
+      }
+
+      .remove-item-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 18px;
+        height: 18px;
+        border: none;
+        border-radius: 999px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.9);
+        color: #94a3b8;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+      }
+
+      .item:hover .remove-item-btn {
+        display: inline-flex;
+      }
+
+      .remove-item-btn:hover {
+        background: rgba(254, 242, 242, 1);
+        color: #dc2626;
       }
 
       .progress-bar {
@@ -212,7 +270,7 @@
         isPinned: false,
       }
 
-      const allowedExtensions = ["pdf", "md", "markdown", "png", "jpg", "jpeg", "webp"]
+      const allowedExtensions = ["pdf", "md", "markdown", "txt"]
 
       const isAllowedFile = (file) => {
         const name = file?.name || ""
@@ -246,12 +304,12 @@
 
       const render = () => {
         if (state.mode === "idle") {
-          root.innerHTML = '<div class="capsule"></div>'
+          root.innerHTML = '<div class="capsule" title="Upload to memory"></div>'
           return
         }
 
         const isDragging = state.mode === "dragging"
-        const hintText = state.warningMessage || "拖拽至此存入记忆"
+        const hintText = state.warningMessage || "Drop files here to store in memory"
         const hintClass = state.warningMessage ? "hint warning" : "hint"
         const listItems = state.items
           .map((item) => {
@@ -264,19 +322,19 @@
                 : "status"
             const statusText =
               item.status === "queued"
-                ? "等待中..."
+                ? "Queued..."
                 : item.status === "uploading"
-                ? "上传中..."
+                ? "Uploading..."
                 : item.status === "uploaded"
-                ? "等待处理..."
+                ? "Waiting..."
                 : item.status === "processing"
                 ? progress >= 95
-                  ? "正在深度解析..."
-                  : "解析中..."
+                  ? "Finalizing..."
+                  : "Processing..."
                 : item.status === "success"
-                ? "完成"
+                ? "Done"
                 : item.status === "error"
-                ? "处理失败"
+                ? "Failed"
                 : ""
 
             const barClass =
@@ -287,7 +345,8 @@
                 : "progress-bar"
 
             return `
-              <div class="item">
+              <div class="item" data-item-id="${item.id}">
+                <button class="remove-item-btn" type="button" data-remove-item="${item.id}" aria-label="Remove upload">×</button>
                 <div class="item-header">
                   <div class="file-name">${item.name}</div>
                   <div class="${statusClass}">${statusText}</div>
@@ -302,17 +361,17 @@
 
         root.innerHTML = `
           <div class="panel ${isDragging ? "dragging" : ""}">
-            <div class="title">记忆胶囊</div>
+            <div class="title">Memory Capsule</div>
             <div class="${hintClass}">${hintText}</div>
             ${
               state.items.length
                 ? `<div class="list">${listItems}</div>`
-                : '<div class="drop-area">点击选择文件上传</div>'
+                : '<div class="drop-area">Click to choose files or drag them here</div>'
             }
             <div class="action-row">
-              <button class="pick-btn" type="button">选择文件</button>
+              <button class="pick-btn" type="button">Choose files</button>
             </div>
-            <button class="close-btn" type="button">收起</button>
+            <button class="close-btn" type="button">Close</button>
           </div>
         `
       }
@@ -341,37 +400,44 @@
           status: "queued",
           progress: 0,
           timer: null,
-          minioUrl: "",
-          httpUrl: "",
         }))
         state.items.push(...newItems)
         render()
         newItems.forEach((item) => uploadItem(item))
       }
 
-      const uploadItem = async (item) => {
-        item.status = "uploading"
+      const removeItem = (itemId) => {
+        const item = state.items.find((entry) => entry.id === itemId)
+        if (item?.timer) {
+          clearInterval(item.timer)
+          item.timer = null
+        }
+        state.items = state.items.filter((entry) => entry.id !== itemId)
         render()
+        if (state.items.length === 0 && !state.isPinned) {
+          scheduleShrink()
+        }
+      }
+
+      const uploadItem = async (item) => {
+        item.status = "processing"
+        item.progress = 0
+        render()
+        startFakeProgress(item)
         const result = await window.dropzoneApi.uploadFile({
           filePath: item.path,
           projectId: state.activeProjectId,
         })
         if (!result?.ok) {
           window.dropzoneApi.logError({
-            stage: "upload",
+            stage: "local_ingest",
             file: item.name,
             error: result?.error || "upload_failed",
           })
-          item.status = "error"
-          item.progress = 100
-          render()
+          finishItem(item, false)
           return
         }
-        item.minioUrl = result.minioUrl
-        item.httpUrl = result.httpUrl
-        item.status = "uploaded"
-        render()
-        processQueue()
+        finishItem(item, true)
       }
 
       const startFakeProgress = (item) => {
@@ -404,7 +470,6 @@
           setTimeout(() => {
             state.items = state.items.filter((entry) => entry.id !== item.id)
             render()
-            processQueue()
             if (state.items.length === 0) {
               scheduleShrink()
             }
@@ -416,69 +481,15 @@
         }
       }
 
-      const processQueue = () => {
-        if (state.items.some((item) => item.status === "processing")) {
-          return
-        }
-        const next = state.items.find((item) => item.status === "uploaded")
-        if (!next) {
-          return
-        }
-        next.status = "processing"
-        next.progress = 0
-        render()
-        startFakeProgress(next)
-        fetch("http://43.139.19.144:8001/api/v1/process_and_extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            minio_url: next.httpUrl || next.minioUrl,
-            project_id: state.activeProjectId,
-            enable_vlm: true,
-          }),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              return response.text().then((body) => {
-                window.dropzoneApi.logError({
-                  stage: "process_and_extract",
-                  status: response.status,
-                  body,
-                  file: next.name,
-                })
-                throw new Error("bad_response")
-              })
-            }
-            return response.json().catch(() => ({}))
-          })
-          .then(() => {
-            const current = state.items.find((item) => item.id === next.id)
-            if (current) {
-              finishItem(current, true)
-            }
-          })
-          .catch((error) => {
-            window.dropzoneApi.logError({
-              stage: "process_and_extract",
-              file: next.name,
-              error: error?.message || error,
-            })
-            const current = state.items.find((item) => item.id === next.id)
-            if (current) {
-              finishItem(current, false)
-            }
-          })
-      }
-
       const handleDrop = (files) => {
         if (!state.activeProjectId) {
-          state.warningMessage = "请先在主程序选择项目"
+            state.warningMessage = "Select a project in the main app first"
           render()
           return
         }
         const validFiles = files.filter((file) => isAllowedFile(file))
         if (!validFiles.length) {
-          state.warningMessage = "仅支持 PDF、MD、图片文件"
+            state.warningMessage = "Only PDF, MD, and TXT files are supported"
           render()
           return
         }
@@ -506,7 +517,7 @@
             state.isPinned = true
             state.warningMessage = state.activeProjectId
               ? ""
-              : "请先在主程序选择项目"
+              : "Select a project in the main app first"
             ensureMode("dragging")
           }
           if (target?.closest?.(".close-btn")) {
@@ -524,6 +535,10 @@
                 handleFilePaths(result.files)
               }
             })
+          }
+          const removeButton = target?.closest?.("[data-remove-item]")
+          if (removeButton) {
+            removeItem(removeButton.getAttribute("data-remove-item"))
           }
         })
         render()

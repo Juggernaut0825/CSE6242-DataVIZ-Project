@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: papermem-postgres
+    environment:
+      POSTGRES_DB: papermem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - papermem_postgres_data:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5.26
+    container_name: papermem-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/papermemneo4j
+      NEO4J_server_memory_heap_initial__size: 512M
+      NEO4J_server_memory_heap_max__size: 512M
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - papermem_neo4j_data:/data
+      - papermem_neo4j_logs:/logs
+
+volumes:
+  papermem_postgres_data:
+  papermem_neo4j_data:
+  papermem_neo4j_logs:

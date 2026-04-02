@@ -10,6 +10,8 @@ __pycache__/
 .Python
 *.so
 .env
+.venv/
+.venv_local/
 venv/
 ENV/
 
@@ -30,6 +32,8 @@ build/
 
 # PDFs
 *.pdf
+demo.gif
+papermem-demo/
 
 # Logs
 *.log

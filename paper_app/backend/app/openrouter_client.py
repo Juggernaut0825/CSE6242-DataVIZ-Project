@@ -8,19 +8,20 @@ from app.config import settings
 class OpenRouterClient:
     def __init__(self) -> None:
         self.client = AsyncOpenAI(
-            api_key=settings.openrouter_api_key,
-            base_url=settings.openrouter_base_url,
+            api_key=settings.llm_api_key,
+            base_url=settings.llm_base_url,
         )
 
     async def chat_completion(
         self,
         messages: List[Dict[str, Any]],
-        model: str = settings.gemini_model,
+        model: str = settings.llm_model,
         temperature: float = 0.2,
         max_tokens: int = 8192,
         stream: bool = False,
         enable_reasoning: bool = True,
         extra_body: Optional[Dict[str, Any]] = None,
+        response_format: Optional[Dict[str, Any]] = None,
     ) -> Any:
         body = dict(extra_body or {})
         if enable_reasoning:
@@ -31,5 +32,6 @@ class OpenRouterClient:
             temperature=temperature,
             max_tokens=max_tokens,
             stream=stream,
+            response_format=response_format,
             extra_body=body if body else None,
         )

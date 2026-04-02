@@ -1,553 +1,696 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Network } from "vis-network/standalone/esm/vis-network"
 
 const apiBase = window?.paperMem?.apiBase || "http://127.0.0.1:8000"
 
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
+const safeParse = (value) => {
+  if (!value || typeof value !== "string") {
+    return null
+  }
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
+const truncate = (value, max = 40) => {
+  if (!value) {
+    return ""
+  }
+  return value.length > max ? `${value.slice(0, max)}...` : value
+}
+
+const sourceTypeLabel = (value) => {
+  if (!value) {
+    return "Memory"
+  }
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+const citationDisplayText = (search, citation) => {
+  if (!citation) {
+    return ""
+  }
+  const matchedUnit = search?.retrieved_units?.find((item) => item.id === citation.unit_id)
+  return matchedUnit?.text || citation.summary || ""
+}
+
+const tooltipElement = (value) => {
+  if (!value || typeof document === "undefined") {
+    return value || ""
+  }
+  const container = document.createElement("div")
+  container.style.maxWidth = "320px"
+  container.style.whiteSpace = "normal"
+  container.style.lineHeight = "1.5"
+  container.style.fontSize = "12px"
+  container.textContent = value
+  return container
+}
+
+const zoomBucketFromScale = (scale) => {
+  if (scale < 0.45) {
+    return 0
+  }
+  if (scale < 0.7) {
+    return 1
+  }
+  if (scale < 1.0) {
+    return 2
+  }
+  if (scale < 1.45) {
+    return 3
+  }
+  return 4
+}
+
+const buildSemanticZoomGraph = (graph, zoomBucket) => {
+  if (!graph?.nodes?.length) {
+    return graph
+  }
+
+  const budgetByBucket = [10, 16, 28, 44, 72]
+  const nodeBudget = budgetByBucket[Math.max(0, Math.min(zoomBucket, budgetByBucket.length - 1))]
+  if (graph.nodes.length <= nodeBudget) {
+    const localImportance = Object.fromEntries(
+      graph.nodes.map((node) => [node.id, Number(node.score || 0)])
+    )
+    return {
+      ...graph,
+      nodes: graph.nodes.map((node) => ({
+        ...node,
+        local_importance: localImportance[node.id] || 0,
+      })),
+      meta: { ...(graph.meta || {}), zoom_bucket: zoomBucket, node_budget: nodeBudget },
+    }
+  }
+
+  const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]))
+  const degreeMap = new Map(graph.nodes.map((node) => [node.id, 0]))
+  for (const edge of graph.edges || []) {
+    degreeMap.set(edge.source, (degreeMap.get(edge.source) || 0) + 1)
+    degreeMap.set(edge.target, (degreeMap.get(edge.target) || 0) + 1)
+  }
+
+  const importanceScore = (node) => {
+    const detail = node.detail || {}
+    const betweenness = Number(detail.betweenness || 0)
+    const degree = Number(degreeMap.get(node.id) || 0)
+    const kindBonus =
+      node.kind === "query"
+        ? 100
+        : node.kind === "claim"
+        ? 3.4
+        : node.kind === "entity"
+        ? 2.4
+        : node.kind === "concept"
+        ? 2.1
+        : node.kind === "conversation_turn" || node.kind === "quick_capture"
+        ? 1.8
+        : node.kind === "file_chunk"
+        ? 1.5
+        : 1
+    return (Number(node.score || 0) * 4 + betweenness * 3 + degree * 0.18) * kindBonus
+  }
+
+  const rankedNodes = [...graph.nodes].sort((left, right) => {
+    return importanceScore(right) - importanceScore(left)
+  })
+
+  const selected = new Set()
+  for (const node of rankedNodes) {
+    if (node.kind === "query") {
+      selected.add(node.id)
+    }
+  }
+
+  const targetCore = Math.max(5, Math.floor(nodeBudget * 0.5))
+  for (const node of rankedNodes) {
+    if (selected.size >= targetCore) {
+      break
+    }
+    selected.add(node.id)
+  }
+
+  const bridgeCandidates = [...(graph.edges || [])]
+    .map((edge) => {
+      const source = nodeMap.get(edge.source)
+      const target = nodeMap.get(edge.target)
+      const sourceCommunity = source?.detail?.community
+      const targetCommunity = target?.detail?.community
+      const bridgeBonus =
+        sourceCommunity !== undefined &&
+        targetCommunity !== undefined &&
+        sourceCommunity !== targetCommunity
+          ? 3
+          : 0
+      const sourceBetweenness = Number(source?.detail?.betweenness || 0)
+      const targetBetweenness = Number(target?.detail?.betweenness || 0)
+      return {
+        edge,
+        score:
+          Number(edge.weight || 0) +
+          bridgeBonus +
+          sourceBetweenness +
+          targetBetweenness +
+          (selected.has(edge.source) || selected.has(edge.target) ? 1.5 : 0),
+      }
+    })
+    .sort((left, right) => right.score - left.score)
+
+  for (const { edge } of bridgeCandidates) {
+    if (selected.size >= nodeBudget) {
+      break
+    }
+    if (selected.has(edge.source) || selected.has(edge.target)) {
+      selected.add(edge.source)
+      if (selected.size < nodeBudget) {
+        selected.add(edge.target)
+      }
+    }
+  }
+
+  for (const node of rankedNodes) {
+    if (selected.size >= nodeBudget) {
+      break
+    }
+    selected.add(node.id)
+  }
+
+  const filteredEdges = (graph.edges || []).filter(
+    (edge) => selected.has(edge.source) && selected.has(edge.target)
+  )
+
+  const localDegreeMap = new Map([...selected].map((id) => [id, 0]))
+  for (const edge of filteredEdges) {
+    localDegreeMap.set(edge.source, (localDegreeMap.get(edge.source) || 0) + 1)
+    localDegreeMap.set(edge.target, (localDegreeMap.get(edge.target) || 0) + 1)
+  }
+
+  const localImportanceMap = new Map()
+  for (const id of selected) {
+    const node = nodeMap.get(id)
+    if (!node) {
+      continue
+    }
+    const localImportance =
+      Number(node.score || 0) * 3 +
+      Number(node.detail?.betweenness || 0) * 2 +
+      Number(localDegreeMap.get(id) || 0) * 0.35
+    localImportanceMap.set(id, localImportance)
+  }
+
+  return {
+    ...graph,
+    nodes: graph.nodes
+      .filter((node) => selected.has(node.id))
+      .map((node) => ({
+        ...node,
+        local_importance: Number(localImportanceMap.get(node.id) || node.score || 0),
+      })),
+    edges: filteredEdges,
+    meta: {
+      ...(graph.meta || {}),
+      zoom_bucket: zoomBucket,
+      node_budget: nodeBudget,
+    },
+  }
+}
+
 function App() {
+  const graphContainerRef = useRef(null)
+  const graphNetworkRef = useRef(null)
+  const graphViewportRef = useRef({ scale: 1, position: null })
+  const zoomBucketRef = useRef(2)
+  const chatScrollRef = useRef(null)
+
   const [projects, setProjects] = useState([])
+  const [chatSessions, setChatSessions] = useState([])
   const [activeProjectId, setActiveProjectId] = useState("")
+  const [activeSessionId, setActiveSessionId] = useState("")
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const [loadingProjects, setLoadingProjects] = useState(false)
+  const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const [showGraph, setShowGraph] = useState(false)
+  const [graphMode, setGraphMode] = useState("live")
+  const [graphView] = useState("macro")
+  const [globalGraph, setGlobalGraph] = useState(null)
+  const [liveGraph, setLiveGraph] = useState(null)
   const [graphLoading, setGraphLoading] = useState(false)
   const [graphError, setGraphError] = useState("")
-  const [graphData, setGraphData] = useState(null)
-  const [graphQuery, setGraphQuery] = useState("")
-  const [graphSearchResult, setGraphSearchResult] = useState(null)
-  const [graphSearchLoading, setGraphSearchLoading] = useState(false)
-  const [graphSearchError, setGraphSearchError] = useState("")
-  const [graphTopK, setGraphTopK] = useState(5)
-  const [showAllGraph, setShowAllGraph] = useState(true)
-  const [selectedNodeDetail, setSelectedNodeDetail] = useState(null)
-  const graphContainerRef = useRef(null)
-  const graphNetworkRef = useRef(null)
+  const [zoomBucket, setZoomBucket] = useState(2)
+  const [selectedGraphNode, setSelectedGraphNode] = useState(null)
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
+  const [newProjectName, setNewProjectName] = useState("")
+  const [showLegend, setShowLegend] = useState(false)
 
-  const activeProject = useMemo(
-    () => projects.find((p) => p.id === activeProjectId),
-    [projects, activeProjectId]
+  const activeSession = useMemo(
+    () => chatSessions.find((session) => session.id === activeSessionId),
+    [chatSessions, activeSessionId]
   )
 
-  const loadProjects = async () => {
+  const visibleGraph = graphMode === "live" && liveGraph ? liveGraph : globalGraph
+  const zoomedGraph = useMemo(
+    () => buildSemanticZoomGraph(visibleGraph, zoomBucket),
+    [visibleGraph, zoomBucket]
+  )
+
+  const loadProjects = useCallback(async () => {
     setLoadingProjects(true)
-    const response = await fetch(`${apiBase}/projects`)
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${apiBase}/projects`)
+      if (!response.ok) {
+        return
+      }
+      const data = await response.json()
+      setProjects(data)
+      if (data.length && !activeProjectId) {
+        setActiveProjectId(data[0].id)
+      }
+    } finally {
       setLoadingProjects(false)
+    }
+  }, [activeProjectId])
+
+  const createChatSession = useCallback(async (projectId, title = "") => {
+    if (!projectId) {
+      return null
+    }
+    const response = await fetch(`${apiBase}/chat_sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: projectId, title: title || undefined }),
+    })
+    if (!response.ok) {
+      return null
+    }
+    const session = await response.json()
+    setChatSessions((prev) => [session, ...prev.map((item) => ({ ...item, is_current: false }))])
+    setActiveSessionId(session.id)
+    setMessages([])
+    return session
+  }, [])
+
+  const loadChatSessions = useCallback(
+    async (projectId) => {
+      if (!projectId) {
+        setChatSessions([])
+        setActiveSessionId("")
+        return
+      }
+      setLoadingSessions(true)
+      try {
+        const response = await fetch(`${apiBase}/projects/${projectId}/chat_sessions`)
+        if (!response.ok) {
+          return
+        }
+        const data = await response.json()
+        if (!data.length) {
+          const created = await createChatSession(projectId)
+          if (created) {
+            setChatSessions([created])
+          }
+          return
+        }
+        setChatSessions(data)
+        setActiveSessionId((prev) => {
+          if (prev && data.some((session) => session.id === prev)) {
+            return prev
+          }
+          return data.find((session) => session.is_current)?.id || data[0]?.id || ""
+        })
+      } finally {
+        setLoadingSessions(false)
+      }
+    },
+    [createChatSession]
+  )
+
+  const activateChatSession = useCallback(async (sessionId) => {
+    if (!sessionId) {
       return
     }
-    const data = await response.json()
-    setProjects(data)
-    if (data.length && !activeProjectId) {
-      setActiveProjectId(data[0].id)
+    const response = await fetch(`${apiBase}/chat_sessions/${sessionId}/activate`, {
+      method: "POST",
+    })
+    if (!response.ok) {
+      return
     }
-    setLoadingProjects(false)
-  }
+    const activated = await response.json()
+    setChatSessions((prev) =>
+      prev.map((session) => ({
+        ...session,
+        is_current: session.id === activated.id,
+      }))
+    )
+    setActiveSessionId(activated.id)
+    setLiveGraph(null)
+  }, [])
+
+  const loadMessages = useCallback(async (projectId, sessionId) => {
+    if (!projectId) {
+      setMessages([])
+      return
+    }
+    setLoadingMessages(true)
+    try {
+      const search = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""
+      const response = await fetch(`${apiBase}/projects/${projectId}/messages${search}`)
+      if (!response.ok) {
+        return
+      }
+      const data = await response.json()
+      setMessages(
+        data.map((message) => ({
+          ...message,
+          search: safeParse(message.search_results),
+          reasoning: safeParse(message.reasoning_trace) || message.reasoning_trace || "",
+        }))
+      )
+    } finally {
+      setLoadingMessages(false)
+    }
+  }, [])
+
+  const loadGraph = useCallback(
+    async (projectId, nextView = graphView) => {
+      if (!projectId) {
+        return
+      }
+      setGraphLoading(true)
+      setGraphError("")
+      try {
+        const response = await fetch(
+          `${apiBase}/graph/${projectId}?view=${encodeURIComponent(nextView)}&limit=90`
+        )
+        if (!response.ok) {
+          setGraphError("Graph load failed")
+          return
+        }
+        const data = await response.json()
+        setGlobalGraph(data)
+      } catch {
+        setGraphError("Graph load failed")
+      } finally {
+        setGraphLoading(false)
+      }
+    },
+    [graphView]
+  )
+
+  const deleteProject = useCallback(
+    async (projectId, projectName) => {
+      if (!projectId) {
+        return
+      }
+      const confirmed = window.confirm(`Delete project "${projectName || "Untitled"}"?`)
+      if (!confirmed) {
+        return
+      }
+      const response = await fetch(`${apiBase}/projects/${projectId}`, { method: "DELETE" })
+      if (!response.ok) {
+        return
+      }
+      setProjects((prev) => {
+        const nextProjects = prev.filter((project) => project.id !== projectId)
+        if (activeProjectId === projectId) {
+          setActiveProjectId(nextProjects[0]?.id || "")
+          setChatSessions([])
+          setActiveSessionId("")
+          setMessages([])
+          setGlobalGraph(null)
+          setLiveGraph(null)
+        }
+        return nextProjects
+      })
+    },
+    [activeProjectId]
+  )
+
+  const deleteChatSession = useCallback(
+    async (sessionId, sessionTitle) => {
+      if (!sessionId) {
+        return
+      }
+      const confirmed = window.confirm(`Delete chat "${sessionTitle || "Untitled chat"}"?`)
+      if (!confirmed) {
+        return
+      }
+      const response = await fetch(`${apiBase}/chat_sessions/${sessionId}`, { method: "DELETE" })
+      if (!response.ok) {
+        return
+      }
+      const payload = await response.json()
+      setChatSessions((prev) => prev.filter((session) => session.id !== sessionId))
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(payload.next_session_id || "")
+        setMessages([])
+        setLiveGraph(null)
+      }
+      await Promise.all([
+        loadChatSessions(activeProjectId),
+        loadMessages(activeProjectId, payload.next_session_id || ""),
+        loadGraph(activeProjectId, graphView),
+      ])
+    },
+    [activeProjectId, activeSessionId, graphView, loadChatSessions, loadGraph, loadMessages]
+  )
+
+  const refreshGraph = useCallback(async () => {
+    if (!activeProjectId) {
+      return
+    }
+    setGraphMode("global")
+    setLiveGraph(null)
+    await loadGraph(activeProjectId, graphView)
+  }, [activeProjectId, graphView, loadGraph])
 
   useEffect(() => {
     loadProjects()
-  }, [])
+  }, [loadProjects])
 
   useEffect(() => {
-    if (activeProjectId && window.paperMem?.setActiveProjectId) {
+    if (!activeProjectId) {
+      return
+    }
+    if (window.paperMem?.setActiveProjectId) {
       window.paperMem.setActiveProjectId(activeProjectId)
     }
-    loadMessages(activeProjectId)
-    setGraphQuery("")
-    setGraphSearchResult(null)
-    setGraphSearchError("")
-    setSelectedNodeDetail(null)
-    setShowAllGraph(true)
-  }, [activeProjectId])
-
-  const fetchGraph = async (projectId) => {
-    if (!projectId) {
-      return
-    }
-    setGraphLoading(true)
-    setGraphError("")
-    const response = await fetch(`${apiBase}/graph/${projectId}?limit=200`)
-    if (!response.ok) {
-      setGraphError("图谱加载失败")
-      setGraphLoading(false)
-      return
-    }
-    const data = await response.json()
-    setGraphData(data)
-    setGraphLoading(false)
-  }
+    setActiveSessionId("")
+    setLiveGraph(null)
+    loadChatSessions(activeProjectId)
+    loadGraph(activeProjectId, graphView)
+  }, [activeProjectId, graphView, loadChatSessions, loadGraph])
 
   useEffect(() => {
-    if (!showGraph || !activeProjectId) {
+    loadMessages(activeProjectId, activeSessionId)
+  }, [activeProjectId, activeSessionId, loadMessages])
+
+  useEffect(() => {
+    if (graphMode === "global") {
+      loadGraph(activeProjectId, graphView)
+    }
+  }, [activeProjectId, graphMode, graphView, loadGraph])
+
+  useEffect(() => {
+    if (!chatScrollRef.current) {
       return
     }
-    let cancelled = false
-    const loadGraph = async () => {
-      if (cancelled) {
+    const frame = window.requestAnimationFrame(() => {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [messages, loadingMessages, sending, activeSessionId])
+
+  useEffect(() => {
+    if (!window.paperMem?.onFileIngested) {
+      return undefined
+    }
+    const unsubscribe = window.paperMem.onFileIngested((payload) => {
+      if (!payload?.projectId || payload.projectId !== activeProjectId) {
         return
       }
-      await fetchGraph(activeProjectId)
-    }
-    loadGraph()
+      setGraphMode("global")
+      setLiveGraph(null)
+      loadGraph(payload.projectId, graphView)
+    })
     return () => {
-      cancelled = true
+      unsubscribe?.()
     }
-  }, [showGraph, activeProjectId])
-
-  const searchBundles = useMemo(() => {
-    const bundles =
-      graphSearchResult?.search_results?.bundles ||
-      graphSearchResult?.bundles ||
-      []
-    return Array.isArray(bundles) ? bundles : []
-  }, [graphSearchResult])
-
-  const recentTurns = useMemo(() => {
-    const conversations =
-      graphSearchResult?.search_results?.recent_turns?.conversations || []
-    return Array.isArray(conversations) ? conversations : []
-  }, [graphSearchResult])
-
-  const topicColorMap = useMemo(() => {
-    if (!graphSearchResult) {
-      return null
-    }
-    const palette = [
-      "#8B5CF6",
-      "#06B6D4",
-      "#F97316",
-      "#22C55E",
-      "#EC4899",
-      "#F59E0B",
-      "#3B82F6",
-      "#14B8A6",
-      "#A855F7",
-      "#EF4444",
-    ]
-    const map = new Map()
-    let cursor = 0
-    searchBundles.forEach((bundle) => {
-      const topics = Array.isArray(bundle?.topics) ? bundle.topics : []
-      topics.forEach((topic) => {
-        if (!topic?.topic_id) {
-          return
-        }
-        const key = String(topic.topic_id)
-        if (!map.has(key)) {
-          map.set(key, palette[cursor % palette.length])
-          cursor += 1
-        }
-      })
-    })
-    return map.size ? map : null
-  }, [graphSearchResult, searchBundles])
-
-  const topicInfoMap = useMemo(() => {
-    if (!graphSearchResult) {
-      return null
-    }
-    const map = new Map()
-    searchBundles.forEach((bundle) => {
-      const topics = Array.isArray(bundle?.topics) ? bundle.topics : []
-      topics.forEach((topic) => {
-        if (!topic?.topic_id) {
-          return
-        }
-        map.set(String(topic.topic_id), topic.title || `Topic ${topic.topic_id}`)
-      })
-    })
-    return map.size ? map : null
-  }, [graphSearchResult, searchBundles])
-
-  const bundleSummary = useMemo(() => {
-    if (!graphSearchResult) {
-      return null
-    }
-    const list = searchBundles.map((bundle) => ({
-      bundleId: bundle?.bundle_id,
-      factCount: Array.isArray(bundle?.facts) ? bundle.facts.length : 0,
-      topicCount: Array.isArray(bundle?.topics) ? bundle.topics.length : 0,
-      conversationCount: Array.isArray(bundle?.conversations)
-        ? bundle.conversations.length
-        : 0,
-    }))
-    return list.length ? list : null
-  }, [graphSearchResult, searchBundles])
-
-  const topicLegend = useMemo(() => {
-    if (!topicColorMap) {
-      return null
-    }
-    const entries = Array.from(topicColorMap.entries()).map(([id, color]) => ({
-      id,
-      color,
-      title: topicInfoMap?.get(id) || `Topic ${id}`,
-    }))
-    return entries.length ? entries : null
-  }, [topicColorMap, topicInfoMap])
-
-  const factIdToGraphNodeId = useMemo(() => {
-    const map = new Map()
-    if (!graphData?.nodes) {
-      return map
-    }
-    graphData.nodes.forEach((node) => {
-      if (node?.fact_id === null || node?.fact_id === undefined) {
-        return
-      }
-      map.set(String(node.fact_id), String(node.id))
-    })
-    return map
-  }, [graphData])
-
-  const truncateText = (value, maxLength) => {
-    if (typeof value !== "string") {
-      return ""
-    }
-    if (value.length <= maxLength) {
-      return value
-    }
-    return value.slice(0, maxLength)
-  }
+  }, [activeProjectId, graphView, loadGraph])
 
   useEffect(() => {
-    if (!showGraph || !graphContainerRef.current) {
+    zoomBucketRef.current = zoomBucket
+  }, [zoomBucket])
+
+  useEffect(() => {
+    graphViewportRef.current = { scale: 1, position: null }
+    setZoomBucket(2)
+    setSelectedGraphNode(null)
+  }, [activeProjectId, activeSessionId, graphMode, visibleGraph?.meta?.query])
+
+  useEffect(() => {
+    if (!graphContainerRef.current || !zoomedGraph) {
       return
     }
-    if (!graphData && !graphSearchResult) {
-      return
-    }
+
     if (graphNetworkRef.current) {
       graphNetworkRef.current.destroy()
       graphNetworkRef.current = null
     }
 
-    const rawNodes = Array.isArray(graphData?.nodes) ? graphData.nodes : []
-    const rawEdges = Array.isArray(graphData?.edges) ? graphData.edges : []
-    const hasSearch = Boolean(graphSearchResult)
-
-    const nodeMap = new Map()
-    const detailMap = new Map()
-    const edgeMap = new Map()
-
-    const upsertNode = (id, patch) => {
-      const current = nodeMap.get(id) || { id }
-      nodeMap.set(id, { ...current, ...patch })
+    const palette = {
+      query: "#8b5cf6",
+      concept: "#60a5fa",
+      entity: "#34d399",
+      claim: "#f59e0b",
+      conversation_turn: "#f97316",
+      quick_capture: "#f97316",
+      file_chunk: "#ec4899",
     }
 
-    const upsertDetail = (id, detail) => {
-      detailMap.set(id, detail)
-    }
-
-    const addEdge = (edge) => {
-      if (edgeMap.has(edge.id)) {
-        return
+    const nodes = (zoomedGraph.nodes || []).map((node) => {
+      const color = palette[node.kind] || "#94a3b8"
+      const localImportance = Number(node.local_importance || node.score || 0)
+      const fullText =
+        node.detail?.full_text || node.detail?.text || node.detail?.query || node.label || node.id
+      return {
+        id: node.id,
+        label: truncate(node.label || node.id, 28),
+        title: tooltipElement(fullText),
+        shape: node.kind === "query" ? "star" : "dot",
+        size: node.kind === "query" ? 28 : 14 + Math.min(20, localImportance * 8),
+        color: {
+          background: color,
+          border: color,
+          highlight: {
+            background: color,
+            border: "#0f172a",
+          },
+        },
+        font: {
+          color: "#0f172a",
+          size: 12,
+          face: "Inter, SF Pro Text, system-ui, sans-serif",
+        },
       }
-      edgeMap.set(edge.id, edge)
-    }
+    })
 
-    if (!hasSearch || showAllGraph) {
-      rawNodes.forEach((node) => {
-        if (node?.id === null || node?.id === undefined) {
-          return
-        }
-        const id = String(node.id)
-        upsertNode(id, {
-          label: truncateText(node.label, 50) || id,
-          size: 10,
-          shape: "dot",
-          color: hasSearch
-            ? { background: "#E5E7EB", border: "#CBD5F5" }
-            : { background: "#8B5CF6", border: "#6D28D9" },
-          font: { color: "#1F2937", size: 12 },
-        })
-        upsertDetail(id, {
-          type: "fact",
-          title: node.label || id,
-          content: typeof node.label === "string" ? node.label : "",
-          score: null,
-          meta: { fact_id: node.fact_id },
-        })
-      })
-    }
+    const edges = (zoomedGraph.edges || []).map((edge) => ({
+      id: edge.id,
+      from: edge.source,
+      to: edge.target,
+      label: zoomBucket >= 3 ? edge.type : "",
+      arrows: "to",
+      width: Math.max(1.2, edge.weight || 1),
+      color: { color: "#cbd5e1", highlight: "#475569" },
+      font: { color: "#64748b", size: 10, align: "middle" },
+      smooth: { enabled: true, type: "dynamic" },
+    }))
 
-    if (hasSearch) {
-      searchBundles.forEach((bundle) => {
-        const bundleId = bundle?.bundle_id
-        const bundleKey = `bundle-${bundleId}`
-        const facts = Array.isArray(bundle?.facts) ? bundle.facts : []
-        const topics = Array.isArray(bundle?.topics) ? bundle.topics : []
-        const conversations = Array.isArray(bundle?.conversations)
-          ? bundle.conversations
-          : []
-        const topTopic = topics.reduce((acc, topic) => {
-          if (!topic) {
-            return acc
-          }
-          if (!acc || (topic.score || 0) > (acc.score || 0)) {
-            return topic
-          }
-          return acc
-        }, null)
-        const topicId = topTopic?.topic_id ?? null
-        const topicColor = topicId
-          ? topicColorMap?.get(String(topicId)) || "#8B5CF6"
-          : "#8B5CF6"
-        const conversationScore = conversations.reduce((max, convo) => {
-          const score = Number.isFinite(convo?.score) ? convo.score : 0
-          return Math.max(max, score)
-        }, 0)
-        const bundleSize = 40 + (facts.length + topics.length + conversations.length) * 6
-
-        if (bundleId !== null && bundleId !== undefined) {
-          upsertNode(bundleKey, {
-            label: `Bundle ${bundleId}`,
-            size: bundleSize,
-            shape: "dot",
-            color: {
-              background: "rgba(148, 163, 184, 0.15)",
-              border: "rgba(148, 163, 184, 0.4)",
-            },
-            font: { color: "#64748B", size: 11 },
-          })
-          upsertDetail(bundleKey, {
-            type: "bundle",
-            title: `Bundle ${bundleId}`,
-            content: "",
-            score: null,
-            meta: {
-              facts: facts.length,
-              topics: topics.length,
-              conversations: conversations.length,
-            },
-          })
-        }
-
-        facts.forEach((fact) => {
-          if (fact?.fact_id === null || fact?.fact_id === undefined) {
-            return
-          }
-          const factId = String(fact.fact_id)
-          const graphNodeId = factIdToGraphNodeId.get(factId)
-          const nodeId = graphNodeId || `fact-${factId}`
-          const score = Number.isFinite(fact.score) ? fact.score : 0
-          const size = Math.max(6, 6 + score * 24)
-          const borderWidth = conversationScore > 0 ? 1 + Math.min(conversationScore, 1) * 2 : 1
-          const factLabel = truncateText(fact.content, 50) || `Fact ${factId}`
-          upsertNode(nodeId, {
-            label: factLabel,
-            size,
-            shape: "dot",
-            color: {
-              background: topicColor,
-              border: topicColor,
-            },
-            borderWidth,
-            font: { color: "#1F2937", size: 12 },
-          })
-          upsertDetail(nodeId, {
-            type: "fact",
-            title: `Fact ${factId}`,
-            content: typeof fact.content === "string" ? fact.content : "",
-            score,
-            meta: fact.metadata || {},
-          })
-          if (bundleId !== null && bundleId !== undefined) {
-            addEdge({
-              id: `${bundleKey}-${nodeId}`,
-              from: bundleKey,
-              to: nodeId,
-              color: { color: "#E2E8F0" },
-              dashes: true,
-            })
-          }
-        })
-
-        topics.forEach((topic) => {
-          if (!topic?.topic_id) {
-            return
-          }
-          const topicKey = `topic-${topic.topic_id}`
-          const color = topicColorMap?.get(String(topic.topic_id)) || "#8B5CF6"
-          const topicLabel =
-            truncateText(topic.title, 30) || `Topic ${topic.topic_id}`
-          upsertNode(topicKey, {
-            label: topicLabel,
-            size: 14,
-            shape: "square",
-            color: {
-              background: color,
-              border: color,
-            },
-            font: { color: "#1F2937", size: 11 },
-          })
-          upsertDetail(topicKey, {
-            type: "topic",
-            title: topic.title || `Topic ${topic.topic_id}`,
-            content: typeof topic.summary === "string" ? topic.summary : "",
-            score: Number.isFinite(topic.score) ? topic.score : null,
-            meta: {},
-          })
-          if (bundleId !== null && bundleId !== undefined) {
-            addEdge({
-              id: `${bundleKey}-${topicKey}`,
-              from: bundleKey,
-              to: topicKey,
-              color: { color: "#E2E8F0" },
-              dashes: true,
-            })
-          }
-        })
-
-        conversations.forEach((conversation) => {
-          if (!conversation?.conversation_id) {
-            return
-          }
-          const convoKey = `conv-${conversation.conversation_id}`
-          const convoLabel =
-            truncateText(conversation.text, 30) ||
-            `Conversation ${conversation.conversation_id}`
-          upsertNode(convoKey, {
-            label: convoLabel,
-            size: 12,
-            shape: "triangle",
-            color: {
-              background: "#94A3B8",
-              border: "#64748B",
-            },
-            font: { color: "#1F2937", size: 11 },
-          })
-          upsertDetail(convoKey, {
-            type: "conversation",
-            title: `Conversation ${conversation.conversation_id}`,
-            content:
-              typeof conversation.text === "string" ? conversation.text : "",
-            score: Number.isFinite(conversation.score) ? conversation.score : null,
-            meta: conversation.metadata || {},
-          })
-          if (bundleId !== null && bundleId !== undefined) {
-            addEdge({
-              id: `${bundleKey}-${convoKey}`,
-              from: bundleKey,
-              to: convoKey,
-              color: { color: "#E2E8F0" },
-              dashes: true,
-            })
-          }
-        })
-      })
-
-      rawEdges.forEach((edge) => {
-        if (edge?.source === null || edge?.source === undefined) {
-          return
-        }
-        if (edge?.target === null || edge?.target === undefined) {
-          return
-        }
-        const edgeId = edge.id ? String(edge.id) : `${edge.source}-${edge.target}`
-        addEdge({
-          id: edgeId,
-          from: String(edge.source),
-          to: String(edge.target),
-          label: edge.type || "",
-          color: { color: "#CBD5F5" },
-        })
-      })
-    } else {
-      rawEdges.forEach((edge) => {
-        if (edge?.source === null || edge?.source === undefined) {
-          return
-        }
-        if (edge?.target === null || edge?.target === undefined) {
-          return
-        }
-        const edgeId = edge.id ? String(edge.id) : `${edge.source}-${edge.target}`
-        addEdge({
-          id: edgeId,
-          from: String(edge.source),
-          to: String(edge.target),
-          label: edge.type || "",
-          color: { color: "#CBD5F5" },
-        })
-      })
-    }
-
-    const nodes = Array.from(nodeMap.values())
-    const nodeIdSet = new Set(nodes.map((node) => node.id))
-    const edges = Array.from(edgeMap.values()).filter(
-      (edge) => nodeIdSet.has(edge.from) && nodeIdSet.has(edge.to)
-    )
-
-    if (nodes.length === 0) {
-      setGraphError(hasSearch ? "检索结果暂无图谱数据" : "暂无图谱数据")
-      return
-    }
-
+    let network = null
     try {
-      setGraphError("")
-      graphNetworkRef.current = new Network(
+      network = new Network(
         graphContainerRef.current,
         { nodes, edges },
         {
-          nodes: {
-            shape: "dot",
-            size: 10,
-            color: { background: "#8B5CF6", border: "#6D28D9" },
-            font: { color: "#1F2937", size: 12 },
-          },
-          edges: {
-            color: { color: "#CBD5F5" },
-            smooth: true,
+          autoResize: true,
+          interaction: {
+            hover: true,
+            navigationButtons: true,
+            keyboard: true,
+            zoomSpeed: 0.35,
           },
           physics: {
-            stabilization: true,
+            stabilization: false,
+            barnesHut: {
+              gravitationalConstant: -4800,
+              springLength: 140,
+              springConstant: 0.03,
+            },
           },
         }
       )
-      graphNetworkRef.current.on("click", (params) => {
-        if (!params?.nodes?.length) {
-          setSelectedNodeDetail(null)
-          return
-        }
-        const nodeId = params.nodes[0]
-        setSelectedNodeDetail(detailMap.get(nodeId) || null)
-      })
-    } catch (error) {
-      const message =
-        error && error.message ? `图谱渲染失败：${error.message}` : "图谱渲染失败"
-      setGraphError(message)
-    }
-  }, [
-    showGraph,
-    graphData,
-    graphSearchResult,
-    showAllGraph,
-    searchBundles,
-    topicColorMap,
-    factIdToGraphNodeId,
-  ])
-
-  useEffect(() => {
-    if (showGraph) {
+      setGraphError("")
+    } catch {
+      setGraphError("Graph render failed")
       return
     }
-    if (graphNetworkRef.current) {
-      graphNetworkRef.current.destroy()
+
+    const currentViewport = graphViewportRef.current
+    if (currentViewport.position || currentViewport.scale !== 1) {
+      network.moveTo({
+        position: currentViewport.position || undefined,
+        scale: currentViewport.scale || 1,
+        animation: false,
+      })
+    }
+
+    network.on("zoom", (params) => {
+      graphViewportRef.current = {
+        scale: params.scale,
+        position: network.getViewPosition(),
+      }
+      const nextBucket = zoomBucketFromScale(params.scale)
+      if (nextBucket !== zoomBucketRef.current) {
+        setZoomBucket(nextBucket)
+      }
+    })
+
+    network.on("dragEnd", () => {
+      graphViewportRef.current = {
+        scale: network.getScale(),
+        position: network.getViewPosition(),
+      }
+    })
+
+    network.on("click", (params) => {
+      if (!params.nodes?.length) {
+        setSelectedGraphNode(null)
+        return
+      }
+      const clickedNode = (zoomedGraph.nodes || []).find((node) => node.id === params.nodes[0])
+      if (!clickedNode) {
+        setSelectedGraphNode(null)
+        return
+      }
+      setSelectedGraphNode({
+        id: clickedNode.id,
+        label: clickedNode.label || clickedNode.id,
+        kind: clickedNode.kind || "semantic",
+        fullText:
+          clickedNode.detail?.full_text ||
+          clickedNode.detail?.text ||
+          clickedNode.detail?.query ||
+          clickedNode.label ||
+          clickedNode.id,
+      })
+    })
+
+    graphNetworkRef.current = network
+    return () => {
+      network?.destroy()
       graphNetworkRef.current = null
     }
-    setSelectedNodeDetail(null)
-  }, [showGraph])
+  }, [zoomBucket, zoomedGraph])
 
-  const createProject = async () => {
-    const name = `Project ${new Date().toLocaleString()}`
+  const createProject = async (name) => {
+    const trimmedName = (name || "").trim()
+    if (!trimmedName) {
+      return
+    }
     const response = await fetch(`${apiBase}/projects`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: trimmedName }),
     })
     if (!response.ok) {
       return
@@ -555,675 +698,505 @@ function App() {
     const project = await response.json()
     setProjects((prev) => [project, ...prev])
     setActiveProjectId(project.id)
+    setIsProjectModalOpen(false)
+    setNewProjectName("")
   }
 
-  const loadMessages = async (projectId) => {
-    if (!projectId) {
-      setMessages([])
-      return
-    }
-    setLoadingMessages(true)
-    const response = await fetch(`${apiBase}/projects/${projectId}/messages`)
-    if (!response.ok) {
-      setLoadingMessages(false)
-      return
-    }
-    const data = await response.json()
-    const mapped = data.map((msg) => {
-      let searchPayload = null
-      if (msg.search_results) {
-        try {
-          searchPayload = JSON.parse(msg.search_results)
-        } catch (error) {
-          searchPayload = msg.search_results
-        }
-      }
-      return {
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        reasoning: msg.reasoning_trace || "",
-        search: searchPayload,
-      }
-    })
-    setMessages(mapped)
-    setLoadingMessages(false)
-  }
-
-  const confirmDeleteProject = async () => {
-    if (!deleteTarget) {
-      return
-    }
-    const response = await fetch(`${apiBase}/projects/${deleteTarget.id}`, {
-      method: "DELETE",
-    })
-    if (response.ok) {
-      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id))
-      if (activeProjectId === deleteTarget.id) {
-        const next = projects.find((p) => p.id !== deleteTarget.id)
-        setActiveProjectId(next ? next.id : "")
-        setMessages([])
-      }
-    }
-    setDeleteTarget(null)
-  }
-
-  const appendMessage = (message) => {
-    setMessages((prev) => [...prev, message])
-  }
-
-  const updateMessage = (id, updater) => {
+  const updateAssistantMessage = (assistantId, patch) => {
     setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id !== id) {
-          return msg
-        }
-        const patch = typeof updater === "function" ? updater(msg) : updater
-        return { ...msg, ...patch }
-      })
+      prev.map((message) =>
+        message.id === assistantId ? { ...message, ...patch } : message
+      )
     )
   }
 
+  const handleNewChat = async () => {
+    const created = await createChatSession(activeProjectId)
+    if (created) {
+      setMessages([])
+      setGraphMode("global")
+      setLiveGraph(null)
+    }
+  }
+
+  const handleCreateProject = async () => {
+    await createProject(newProjectName)
+  }
+
   const handleSend = async () => {
-    if (!input.trim() || !activeProjectId || sending || loadingMessages) {
+    if (!input.trim() || !activeProjectId || sending) {
       return
     }
-    setSending(true)
+    const session =
+      activeSessionId
+        ? { id: activeSessionId }
+        : await createChatSession(activeProjectId, `Chat ${chatSessions.length + 1}`)
+    if (!session?.id) {
+      return
+    }
 
-    const userMessage = { id: makeId(), role: "user", content: input.trim() }
-    appendMessage(userMessage)
-    setInput("")
-
+    const query = input.trim()
     const assistantId = makeId()
-    appendMessage({
-      id: assistantId,
-      role: "assistant",
-      content: "",
-      reasoning: "",
-      search: null,
-    })
+    setInput("")
+    setSending(true)
+    setGraphMode("live")
+    setMessages((prev) => [
+      ...prev,
+      { id: makeId(), role: "user", content: query },
+      { id: assistantId, role: "assistant", content: "", reasoning: "", search: null },
+    ])
 
-    const response = await fetch(`${apiBase}/chat/stream`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: userMessage.content,
-        project_id: activeProjectId,
-        top_k: 5,
-      }),
-    })
+    try {
+      const response = await fetch(`${apiBase}/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query,
+          project_id: activeProjectId,
+          session_id: session.id,
+          top_k: 6,
+        }),
+      })
+      if (!response.ok || !response.body) {
+        return
+      }
 
-    if (!response.body) {
-      setSending(false)
-      return
-    }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder("utf-8")
+      let buffer = ""
 
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder("utf-8")
-    let buffer = ""
-
-    while (true) {
-      const { value, done } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-
-      let boundaryIndex = buffer.indexOf("\n\n")
-      while (boundaryIndex !== -1) {
-        const rawEvent = buffer.slice(0, boundaryIndex).trim()
-        buffer = buffer.slice(boundaryIndex + 2)
-        boundaryIndex = buffer.indexOf("\n\n")
-
-        if (!rawEvent.startsWith("data:")) {
-          continue
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) {
+          break
         }
+        buffer += decoder.decode(value, { stream: true })
+        const events = buffer.split("\n\n")
+        buffer = events.pop() || ""
 
-        const payload = rawEvent.replace(/^data:\s*/, "")
-        if (!payload) {
-          continue
-        }
+        for (const event of events) {
+          const payload = event.replace(/^data:\s*/, "")
+          if (!payload) {
+            continue
+          }
+          let parsed = null
+          try {
+            parsed = JSON.parse(payload)
+          } catch {
+            parsed = null
+          }
+          if (!parsed) {
+            continue
+          }
 
-        let parsed = null
-        try {
-          parsed = JSON.parse(payload)
-        } catch (error) {
-          parsed = null
-        }
-
-        if (!parsed) {
-          continue
-        }
-
-        if (parsed.type === "search") {
-          updateMessage(assistantId, { search: parsed.payload })
-        } else if (parsed.type === "content_chunk") {
-          updateMessage(assistantId, (prev) => ({
-            content: prev.content + parsed.content,
-          }))
-        } else if (parsed.type === "reasoning") {
-          updateMessage(assistantId, (prev) => ({
-            reasoning: prev.reasoning + parsed.content,
-          }))
+          if (parsed.type === "search") {
+            updateAssistantMessage(assistantId, { search: parsed.payload })
+            setLiveGraph(parsed.payload?.overlay || null)
+          } else if (parsed.type === "reasoning") {
+            setMessages((prev) =>
+              prev.map((message) =>
+                message.id === assistantId
+                  ? {
+                      ...message,
+                      reasoning: `${message.reasoning || ""}${parsed.content || ""}`,
+                    }
+                  : message
+              )
+            )
+          } else if (parsed.type === "content_chunk") {
+            setMessages((prev) =>
+              prev.map((message) =>
+                message.id === assistantId
+                  ? {
+                      ...message,
+                      content: `${message.content || ""}${parsed.content || ""}`,
+                    }
+                  : message
+              )
+            )
+          }
         }
       }
-    }
 
-    setSending(false)
-  }
-
-  const handleGraphSearch = async () => {
-    if (!graphQuery.trim() || !activeProjectId || graphSearchLoading) {
-      return
+      await Promise.all([
+        loadMessages(activeProjectId, session.id),
+        loadChatSessions(activeProjectId),
+      ])
+    } finally {
+      setSending(false)
     }
-    setGraphSearchLoading(true)
-    setGraphSearchError("")
-    setGraphError("")
-    setSelectedNodeDetail(null)
-    const topKValue = Math.max(1, Math.min(50, Number(graphTopK) || 1))
-    const response = await fetch(`${apiBase}/agenticSearch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: graphQuery.trim(),
-        project_id: activeProjectId,
-        top_k: topKValue,
-      }),
-    })
-    if (!response.ok) {
-      setGraphSearchError("检索失败")
-      setGraphSearchLoading(false)
-      return
-    }
-    const data = await response.json()
-    setGraphSearchResult(data)
-    setGraphSearchLoading(false)
-  }
-
-  const handleGraphRefresh = async () => {
-    setGraphQuery("")
-    setGraphSearchResult(null)
-    setGraphSearchError("")
-    setGraphError("")
-    setSelectedNodeDetail(null)
-    setShowAllGraph(true)
-    await fetchGraph(activeProjectId)
   }
 
   const renderMessage = (message) => {
-    if (message.role === "assistant") {
-      const searchText = message.search
-        ? JSON.stringify(message.search, null, 2)
-        : ""
-      return (
-        <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-          <div className="text-xs uppercase tracking-wider text-gray-400">
-            Assistant
-          </div>
-          {message.search ? (
-            <details className="mt-2 text-xs text-gray-400">
-              <summary className="cursor-pointer">检索到的记忆</summary>
-              <div className="mt-2 whitespace-pre-wrap text-xs leading-6 text-gray-400">
-                {searchText}
-              </div>
-            </details>
-          ) : null}
-          {message.reasoning ? (
-            <details className="mt-2 text-xs text-gray-400">
-              <summary className="cursor-pointer">思考过程</summary>
-              <div className="mt-2 whitespace-pre-wrap text-xs leading-6 text-gray-400">
-                {message.reasoning}
-              </div>
-            </details>
-          ) : null}
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink">
-            {message.content || "生成中..."}
-          </div>
-        </div>
-      )
-    }
-
+    const isUser = message.role === "user"
+    const focusTerms = message.search?.focus_terms || []
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-        <div className="text-xs uppercase tracking-wider text-gray-400">User</div>
-        <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink">
-          {message.content}
+      <div
+        key={message.id}
+        className={`rounded-3xl border px-4 py-4 shadow-sm ${
+          isUser ? "border-violet-200 bg-violet-50" : "border-slate-200 bg-white"
+        }`}
+      >
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          {isUser ? "User" : "PaperMem"}
         </div>
+        <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-800">
+          {message.content || (sending && !isUser ? "Thinking..." : "")}
+        </div>
+        {!isUser && focusTerms.length ? (
+          <div className="mt-3 rounded-2xl bg-violet-50 p-3">
+            <div className="text-xs font-medium text-violet-700">Focus</div>
+            <div className="scrollbar-hidden mt-2 flex gap-2 overflow-x-auto pb-1">
+              {focusTerms.map((term) => (
+                <div
+                  key={term}
+                  className="shrink-0 rounded-full border border-violet-200 bg-white px-3 py-1 text-xs text-violet-700"
+                >
+                  {term}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {!isUser && message.search?.citations?.length ? (
+          <details className="mt-3 rounded-2xl bg-emerald-50 p-3">
+            <summary className="cursor-pointer text-xs font-medium text-emerald-700">
+              {`Evidence (${message.search.citations.length})`}
+            </summary>
+            <div className="mt-2 space-y-2 text-xs text-emerald-900">
+              {message.search.citations.map((citation) => (
+                <div
+                  key={citation.unit_id}
+                  className="rounded-xl bg-white/70 p-2"
+                >
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600">
+                    {sourceTypeLabel(citation.source_type)}
+                  </div>
+                  <div className="scrollbar-hidden mt-1 overflow-x-auto whitespace-nowrap text-xs leading-5 text-emerald-900">
+                    {citationDisplayText(message.search, citation)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      <div className="flex min-h-screen">
-        <aside className="w-64 border-r border-gray-100 bg-mist px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold tracking-wide text-ink">
-              PaperMem Copilot
+    <div className="relative h-screen overflow-hidden bg-slate-100 text-slate-900">
+      {isProjectModalOpen ? (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="text-base font-semibold text-slate-900">New project</div>
+            <div className="mt-1 text-sm text-slate-500">
+              Create a project to group files, chats, and graph memory.
+            </div>
+            <input
+              autoFocus
+              value={newProjectName}
+              onChange={(event) => setNewProjectName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  handleCreateProject()
+                }
+                if (event.key === "Escape") {
+                  setIsProjectModalOpen(false)
+                  setNewProjectName("")
+                }
+              }}
+              placeholder="Project name"
+              className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-violet-300"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProjectModalOpen(false)
+                  setNewProjectName("")
+                }}
+                className="rounded-full px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateProject}
+                disabled={!newProjectName.trim()}
+                className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div className="flex h-full overflow-hidden">
+        <aside className="h-full w-64 overflow-y-auto border-r border-slate-200 bg-white px-5 py-6">
+          <div className="text-xl font-semibold">PaperMem</div>
+          <div className="mt-8 flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              Projects
             </div>
             <button
               type="button"
-              onClick={createProject}
-              className="rounded-md border border-transparent bg-ether px-2 py-1 text-xs font-medium text-white"
+              onClick={() => setIsProjectModalOpen(true)}
+              className="rounded-full bg-violet-600 px-3 py-1 text-xs font-medium text-white"
             >
               New
             </button>
           </div>
-          <div className="mt-8 space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Projects
-            </div>
-            <div className="space-y-2">
-              {loadingProjects ? (
-                <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-3 text-xs text-gray-400">
-                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-ether" />
-                  Loading projects
-                </div>
-              ) : null}
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className={`group relative rounded-lg border px-3 py-2 text-sm ${project.id === activeProjectId
-                    ? "border-ether bg-white text-ink"
-                    : "border-gray-100 bg-white text-gray-600"
-                    }`}
+          <div className="mt-4 space-y-2">
+            {loadingProjects ? (
+              <div className="text-sm text-slate-400">Loading...</div>
+            ) : null}
+            {projects.map((project) => (
+              <div key={project.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => setActiveProjectId(project.id)}
+                  className={`w-full rounded-2xl border px-4 py-3 pr-10 text-left transition ${
+                    activeProjectId === project.id
+                      ? "border-violet-300 bg-violet-50"
+                      : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
                 >
-                  <button
-                    type="button"
-                    disabled={loadingProjects}
-                    onClick={() => setActiveProjectId(project.id)}
-                    className="w-full text-left"
-                  >
-                    {project.name}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setDeleteTarget(project)
-                    }}
-                    className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full text-xs text-red-500 hover:bg-red-50 group-hover:flex"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={createProject}
-                disabled={loadingProjects}
-                className="w-full rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-400"
-              >
-                Add Project
-              </button>
-            </div>
+                  <div className="text-sm font-medium">{project.name}</div>
+                  <div className="mt-1 text-xs text-slate-400">
+                    {project.type || "General"}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete ${project.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    deleteProject(project.id, project.name)
+                  }}
+                  className="absolute right-3 top-3 hidden h-6 w-6 items-center justify-center rounded-full text-sm text-slate-400 transition hover:bg-white hover:text-rose-500 group-hover:flex"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         </aside>
-        <main className="flex flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-gray-100 px-8 py-6">
-            <div>
-              <div className="text-lg font-semibold text-ink">
-                {activeProject?.name || "Main Chat"}
+
+        <main className="flex min-h-0 flex-1 overflow-hidden">
+          <section className="flex min-h-0 min-w-0 flex-[0_0_68%] flex-col border-r border-slate-200 bg-white">
+            <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <div className="text-lg font-semibold">PaperMem</div>
+                <button
+                  type="button"
+                  onClick={() => setShowLegend((prev) => !prev)}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:bg-slate-50"
+                  aria-label="Toggle graph legend"
+                  title="Toggle graph legend"
+                >
+                  i
+                </button>
               </div>
-              <div className="text-xs text-gray-400">
-                Query your memory with long-term context
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowGraph(true)}
-              disabled={!activeProjectId}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender text-white disabled:opacity-50"
-              title="Project Graph"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3a15 15 0 0 1 0 18" />
-                <path d="M12 3a15 15 0 0 0 0 18" />
-              </svg>
-            </button>
-          </header>
-          <section className="flex-1 px-8 py-8">
-            <div className="mx-auto max-w-3xl space-y-6">
-              {loadingMessages ? (
-                <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-6 py-5 text-xs text-gray-400 shadow-sm">
-                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-ether" />
-                  Loading messages
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-                  <div className="text-xs uppercase tracking-wider text-gray-400">
-                    Assistant
-                  </div>
-                  <div className="mt-2 text-sm leading-6 text-ink">
-                    在这里进行检索式对话，回答会融合长期记忆内容。
-                  </div>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id}>{renderMessage(message)}</div>
-                ))
-              )}
-            </div>
-          </section>
-          <footer className="border-t border-gray-100 px-8 py-6">
-            <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-              <input
-                className="flex-1 text-sm text-ink outline-none placeholder:text-gray-300"
-                placeholder={
-                  activeProjectId
-                    ? loadingMessages
-                      ? "加载中..."
-                      : "输入问题，Enter 发送"
-                    : "先创建项目"
-                }
-                value={input}
-                disabled={!activeProjectId || sending || loadingMessages}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    handleSend()
-                  }
-                }}
-              />
               <button
                 type="button"
-                onClick={handleSend}
-                disabled={!activeProjectId || sending || loadingMessages}
-                className="rounded-lg bg-ether px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                onClick={refreshGraph}
+                disabled={!activeProjectId || graphLoading}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
               >
-                Send
+                {graphLoading ? "Refreshing..." : "Refresh"}
               </button>
-            </div>
-          </footer>
-        </main>
-      </div>
-      {showGraph ? (
-        <div className="fixed inset-0 z-40 flex bg-white">
-          <aside className="flex w-64 flex-col border-r border-gray-100 bg-mist px-4 py-6">
-            <div className="text-sm font-semibold text-ink">调试面板</div>
-            <label className="mt-4 text-xs font-medium text-gray-500">
-              Query
-            </label>
-            <textarea
-              className="mt-2 h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-2 text-xs text-ink outline-none"
-              placeholder="输入 query 后点击检索"
-              value={graphQuery}
-              onChange={(event) => setGraphQuery(event.target.value)}
-              disabled={!activeProjectId || graphSearchLoading}
-            />
-            <label className="mt-4 text-xs font-medium text-gray-500">
-              Top K
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="50"
-              value={graphTopK}
-              onChange={(event) => {
-                const value = Number(event.target.value)
-                setGraphTopK(Number.isNaN(value) ? 1 : value)
-              }}
-              className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-ink outline-none"
-              disabled={!activeProjectId || graphSearchLoading}
-            />
-            <button
-              type="button"
-              onClick={handleGraphSearch}
-              disabled={
-                !activeProjectId || graphSearchLoading || !graphQuery.trim()
-              }
-              className="mt-3 rounded-lg bg-ether px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
-            >
-              {graphSearchLoading ? "检索中..." : "检索"}
-            </button>
-            {graphSearchError ? (
-              <div className="mt-2 text-xs text-red-500">{graphSearchError}</div>
-            ) : null}
-            <div className="mt-5 text-xs font-medium text-gray-500">
-              agentsearch 返回
-            </div>
-            <div className="mt-2 flex-1 overflow-hidden">
-              <div className="h-full w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 text-[11px] text-gray-500">
-                {graphSearchResult
-                  ? JSON.stringify(graphSearchResult, null, 2)
-                  : "等待检索结果"}
-              </div>
-            </div>
-          </aside>
-          <div className="flex flex-1 flex-col">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowGraph(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender text-white"
-                  title="返回主页"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 10.5 12 3l9 7.5" />
-                    <path d="M5 9.5V21h14V9.5" />
-                    <path d="M9 21v-6h6v6" />
-                  </svg>
-                </button>
-                <div className="text-sm font-semibold text-ink">
-                  {activeProject?.name || "Project"} 图谱
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-xs text-gray-500">
-                  <input
-                    type="checkbox"
-                    checked={showAllGraph}
-                    onChange={(event) => setShowAllGraph(event.target.checked)}
-                    disabled={!graphSearchResult}
-                    className="h-3 w-3 rounded border-gray-300"
-                  />
-                  显示全部图谱
-                </label>
-                <button
-                  type="button"
-                  onClick={handleGraphRefresh}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
-                  title="刷新"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 12a8 8 0 0 1-8 8 8 8 0 0 1-7.2-4.5" />
-                    <path d="M4 12a8 8 0 0 1 8-8 8 8 0 0 1 7.2 4.5" />
-                    <path d="M4 7v5h5" />
-                    <path d="M20 17v-5h-5" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="relative flex-1">
+            </header>
+
+            <div className="relative min-h-0 flex-1 overflow-hidden">
               {graphLoading ? (
-                <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                  <span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-ether" />
-                  图谱加载中
+                <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                  Loading graph...
                 </div>
               ) : graphError ? (
-                <div className="flex h-full items-center justify-center text-xs text-red-500">
+                <div className="flex h-full items-center justify-center text-sm text-rose-500">
                   {graphError}
                 </div>
               ) : (
-                <div className="h-full w-full">
-                  <div ref={graphContainerRef} className="h-full w-full" />
-                  <div className="absolute right-4 top-4 w-72 max-h-[80vh] overflow-hidden rounded-lg border border-gray-200 bg-white/95 p-3 text-[11px] text-gray-600 shadow-sm">
-                    <div className="text-xs font-semibold text-ink">图例与详情</div>
-                    <div className="mt-2 max-h-[72vh] overflow-y-auto pr-1">
-                      <div>
-                        <div className="text-[11px] font-medium text-gray-500">
-                          节点类型
-                        </div>
-                        <div className="mt-1 space-y-1 text-[10px] text-gray-500">
-                          <div>圆点：Fact</div>
-                          <div>方块：Topic</div>
-                          <div>三角：Conversation</div>
-                          <div>大圆：Bundle</div>
-                        </div>
-                      </div>
-                      <div className="mt-3 text-[11px] text-gray-500">
-                        节点大小：fact score
-                      </div>
-                      <div className="mt-1 text-[11px] text-gray-500">
-                        边框粗细：bundle 内对话命中强度
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-[11px] font-medium text-gray-500">
-                          Topic 颜色
-                        </div>
-                        <div className="mt-1 space-y-1">
-                          {topicLegend && topicLegend.length ? (
-                            topicLegend.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center gap-2"
-                              >
-                                <span
-                                  className="inline-block h-3 w-3 rounded-full"
-                                  style={{ backgroundColor: item.color }}
-                                />
-                                <span className="truncate">{item.title}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-gray-400">暂无</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-[11px] font-medium text-gray-500">
-                          Bundle 列表
-                        </div>
-                        <div className="mt-1 space-y-1 text-[10px] text-gray-500">
-                          {bundleSummary && bundleSummary.length ? (
-                            bundleSummary.map((bundle) => (
-                              <div
-                                key={bundle.bundleId}
-                                className="flex items-center justify-between rounded border border-gray-200 px-2 py-1"
-                              >
-                                <span>Bundle {bundle.bundleId}</span>
-                                <span>
-                                  F{bundle.factCount} T{bundle.topicCount} C
-                                  {bundle.conversationCount}
-                                </span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-gray-400">暂无</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-[11px] font-medium text-gray-500">
-                          Recent Turns
-                        </div>
-                        <div className="mt-1 space-y-1">
-                          {recentTurns && recentTurns.length ? (
-                            recentTurns.map((turn) => (
-                              <div
-                                key={turn.conversation_id}
-                                className="rounded border border-gray-200 px-2 py-1 text-[10px]"
-                              >
-                                <div className="truncate text-gray-500">
-                                  {turn.text || ""}
-                                </div>
-                                <div className="text-[10px] text-gray-400">
-                                  score {turn.score ?? "-"}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-gray-400">暂无</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-[11px] font-medium text-gray-500">
-                          节点详情
-                        </div>
-                        {selectedNodeDetail ? (
-                          <div className="mt-1 rounded border border-gray-200 bg-white p-2">
-                            <div className="text-[11px] font-medium text-ink">
-                              {selectedNodeDetail.title}
-                            </div>
-                            {selectedNodeDetail.score !== null &&
-                              selectedNodeDetail.score !== undefined ? (
-                              <div className="mt-1 text-[10px] text-gray-400">
-                                score {selectedNodeDetail.score}
-                              </div>
-                            ) : null}
-                            <div className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] text-gray-500">
-                              {selectedNodeDetail.content || "暂无内容"}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mt-1 text-gray-400">
-                            点击节点查看详情
-                          </div>
-                        )}
-                      </div>
+                <div ref={graphContainerRef} className="h-full w-full" />
+              )}
+
+              {showLegend ? (
+                <div className="pointer-events-auto absolute right-4 top-4 z-10 w-[240px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-900">Legend</div>
+                    <button
+                      type="button"
+                      onClick={() => setShowLegend(false)}
+                      className="rounded-full px-2 py-1 text-xs text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="mt-3 space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-4 w-4 items-center justify-center text-[10px] text-violet-600">
+                        ★
+                      </span>
+                      <span>`query` node</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-amber-500" />
+                      <span>`claim` node</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                      <span>`entity` node</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-sky-400" />
+                      <span>`concept` node</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-pink-500" />
+                      <span>`file_chunk` node</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-orange-500" />
+                      <span>`conversation` / `capture` node</span>
+                    </div>
+                    <div className="pt-2 text-[11px] text-slate-400">
+                      Arrows show relation direction. Larger nodes indicate higher local importance in the current zoomed view.
                     </div>
                   </div>
                 </div>
+              ) : null}
+
+              {selectedGraphNode ? (
+                <div className="pointer-events-auto absolute bottom-4 left-4 z-10 w-[340px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        {selectedGraphNode.kind}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900">
+                        {selectedGraphNode.label}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGraphNode(null)}
+                      className="rounded-full px-2 py-1 text-xs text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="mt-3 max-h-36 overflow-y-auto whitespace-pre-wrap text-xs leading-5 text-slate-600">
+                    {selectedGraphNode.fullText}
+                  </div>
+                </div>
+              ) : null}
+
+            </div>
+          </section>
+
+          <section className="flex h-full min-h-0 min-w-[360px] max-w-[420px] flex-[0_0_32%] flex-col overflow-hidden bg-slate-50">
+            <header className="border-b border-slate-200 px-5 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold">Agent Chat</div>
+                  <div className="mt-1 text-xs text-slate-400">
+                    Quick capture writes into the active project and active chat.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNewChat}
+                  disabled={!activeProjectId}
+                  className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm disabled:opacity-50"
+                >
+                  New chat
+                </button>
+              </div>
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                {loadingSessions ? (
+                  <div className="text-xs text-slate-400">Loading chats...</div>
+                ) : (
+                  chatSessions.map((session) => (
+                    <div key={session.id} className="group relative min-w-[116px]">
+                      <button
+                        type="button"
+                        onClick={() => activateChatSession(session.id)}
+                        className={`w-full rounded-2xl border px-3 py-2 pr-8 text-left text-xs transition ${
+                          activeSessionId === session.id
+                            ? "border-violet-300 bg-violet-50"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        <div className="font-medium text-slate-700">
+                          {truncate(session.title || "Untitled chat", 20)}
+                        </div>
+                        <div className="mt-1 text-slate-400">
+                          {session.message_count || 0} messages
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Delete ${session.title || "chat"}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          deleteChatSession(session.id, session.title)
+                        }}
+                        className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full text-sm text-slate-400 transition hover:bg-white hover:text-rose-500 group-hover:flex"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </header>
+
+            <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+              {loadingMessages ? (
+                <div className="text-sm text-slate-400">Loading chat history...</div>
+              ) : messages.length ? (
+                messages.map(renderMessage)
+              ) : (
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-4 py-6 text-sm text-slate-500">
+                  {activeSession
+                    ? "This chat is empty. Ask a new question to start a fresh reasoning trace."
+                    : "Start chatting or create a new chat for this project."}
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
-      {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-[320px] rounded-2xl bg-white px-6 py-5 shadow-xl">
-            <div className="text-sm font-semibold text-ink">删除项目</div>
-            <div className="mt-2 text-xs text-gray-500">
-              确认删除 “{deleteTarget.name}” 吗？此操作不可撤销。
+
+            <div className="border-t border-slate-200 px-4 py-4">
+              <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+                <textarea
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  disabled={!activeProjectId || sending}
+                  rows={3}
+                  placeholder={
+                    activeProjectId
+                      ? "Ask the memory graph..."
+                      : "Create or select a project first"
+                  }
+                  className="w-full resize-none border-0 text-sm leading-6 text-slate-800 outline-none"
+                />
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="text-xs text-slate-400">Semantic zoom updates from retrieval and refresh.</div>
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!activeProjectId || sending || !input.trim()}
+                    className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    {sending ? "Sending..." : "Send"}
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="rounded-md border border-gray-200 px-3 py-1 text-xs text-gray-600"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteProject}
-                className="rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white"
-              >
-                删除
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </section>
+        </main>
+      </div>
     </div>
   )
 }

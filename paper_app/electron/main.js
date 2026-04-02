@@ -7,21 +7,21 @@ const {
   dialog,
   systemPreferences,
 } = require("electron")
-const path = require("path")
 const fs = require("fs")
+const path = require("path")
 const { execFile, spawn } = require("child_process")
 const { uIOhook } = require("uiohook-napi")
-const { Client: MinioClient } = require("minio")
-const crypto = require("crypto")
 
 const isDev = !app.isPackaged
 let backendProcess = null
+let mainWindow = null
 let overlayWindow = null
 let dropzoneWindow = null
 let edgeDropWindow = null
 let activeProjectId = ""
 let latestSelectionText = ""
 let mouseDownPoint = null
+let isQuitting = false
 
 const OVERLAY_WIDTH = 70
 const OVERLAY_HEIGHT = 32
@@ -33,22 +33,7 @@ const DROPZONE_ACTIVE_WIDTH = 300
 const DROPZONE_ACTIVE_HEIGHT = 400
 const DROPZONE_PADDING = 20
 const EDGE_DROPZONE_SIZE = 200
-
-const minioConfig = {
-  endpoint: process.env.MINIO_ENDPOINT || "43.139.19.144:9000",
-  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin",
-  secure: process.env.MINIO_SECURE === "true" || false,
-  bucketName: process.env.MINIO_BUCKET || "useruploadedtobeparsed",
-}
-
-const minioClient = new MinioClient({
-  endPoint: minioConfig.endpoint.split(":")[0],
-  port: Number(minioConfig.endpoint.split(":")[1] || 9000),
-  useSSL: minioConfig.secure,
-  accessKey: minioConfig.accessKey,
-  secretKey: minioConfig.secretKey,
-})
+const BACKEND_URL = "http://127.0.0.1:8000/health"
 
 const sendCopyShortcut = () =>
   new Promise((resolve) => {
@@ -74,16 +59,41 @@ const sendCopyShortcut = () =>
     resolve()
   })
 
-const startBackend = () => {
+const resolvePythonBin = (backendCwd) => {
+  const candidates = [
+    path.join(backendCwd, ".venv_local", "bin", "python"),
+    path.join(backendCwd, ".venv", "bin", "python"),
+    "python3",
+    "python",
+  ]
+  return candidates.find((candidate) => candidate.startsWith("/") ? fs.existsSync(candidate) : true)
+}
+
+const isBackendHealthy = async () => {
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 1200)
+    const response = await fetch(BACKEND_URL, {
+      method: "GET",
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+const startBackend = async () => {
   if (backendProcess) {
+    return
+  }
+  if (await isBackendHealthy()) {
     return
   }
 
   const backendCwd = path.join(app.getAppPath(), "backend")
-  const pythonFromVenv = path.join(backendCwd, ".venv", "bin", "python")
-  const pythonBin = require("fs").existsSync(pythonFromVenv)
-    ? pythonFromVenv
-    : "python"
+  const pythonBin = resolvePythonBin(backendCwd)
 
   const args = [
     "-m",
@@ -103,6 +113,10 @@ const startBackend = () => {
     cwd: backendCwd,
     env: { ...process.env, PYTHONUNBUFFERED: "1" },
     stdio: isDev ? "inherit" : "ignore",
+  })
+
+  backendProcess.on("exit", () => {
+    backendProcess = null
   })
 }
 
@@ -225,6 +239,17 @@ const hideOverlay = () => {
   }
 }
 
+const closeAuxiliaryWindows = () => {
+  ;[overlayWindow, dropzoneWindow, edgeDropWindow].forEach((win) => {
+    if (win && !win.isDestroyed()) {
+      win.close()
+    }
+  })
+  overlayWindow = null
+  dropzoneWindow = null
+  edgeDropWindow = null
+}
+
 const showOverlayAt = (x, y) => {
   if (!overlayWindow) {
     return
@@ -319,7 +344,7 @@ const remindWindowsAdminPermission = () => {
 }
 
 const createWindow = () => {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 840,
     backgroundColor: "#FFFFFF",
@@ -329,14 +354,22 @@ const createWindow = () => {
   })
 
   if (isDev) {
-    win.loadURL("http://127.0.0.1:5173")
+    mainWindow.loadURL("http://127.0.0.1:5173")
   } else {
-    win.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"))
+    mainWindow.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"))
   }
+
+  mainWindow.on("closed", () => {
+    mainWindow = null
+    closeAuxiliaryWindows()
+    if (!isQuitting) {
+      app.quit()
+    }
+  })
 }
 
-app.whenReady().then(() => {
-  startBackend()
+app.whenReady().then(async () => {
+  await startBackend()
   ensureAccessibilityPermissions()
   remindWindowsAdminPermission()
   createOverlayWindow()
@@ -352,6 +385,8 @@ app.whenReady().then(() => {
 })
 
 app.on("before-quit", () => {
+  isQuitting = true
+  closeAuxiliaryWindows()
   uIOhook.stop()
   if (backendProcess) {
     backendProcess.kill()
@@ -427,24 +462,28 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
     return { ok: false, error: "invalid_payload" }
   }
   try {
-    const stats = await fs.promises.stat(payload.filePath)
-    const fileName = path.basename(payload.filePath)
-    const timestamp = Date.now()
-    const uniqueId = crypto.randomUUID()
-    const objectName = `${payload.projectId}/${timestamp}_${uniqueId}_${fileName}`
-    const stream = fs.createReadStream(payload.filePath)
-
-    await minioClient.putObject(
-      minioConfig.bucketName,
-      objectName,
-      stream,
-      stats.size
-    )
-
-    const minioUrl = `minio://${minioConfig.bucketName}/${objectName}`
-    const protocol = minioConfig.secure ? "https" : "http"
-    const httpUrl = `${protocol}://${minioConfig.endpoint}/${minioConfig.bucketName}/${objectName}`
-    return { ok: true, minioUrl, httpUrl }
+    const response = await fetch("http://127.0.0.1:8000/files/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        file_path: payload.filePath,
+        project_id: payload.projectId,
+      }),
+    })
+    if (!response.ok) {
+      const detail = await response.text()
+      return { ok: false, error: detail || "ingest_failed" }
+    }
+    const result = await response.json()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("memory-file-ingested", {
+        projectId: payload.projectId,
+        filePath: payload.filePath,
+        filename: result?.filename || path.basename(payload.filePath),
+        unitCount: result?.unit_count || 0,
+      })
+    }
+    return { ok: true, result }
   } catch (error) {
     console.error("[dropzone-upload] failed", {
       filePath: payload.filePath,
@@ -459,8 +498,7 @@ ipcMain.handle("dropzone-pick-files", async () => {
   const result = await dialog.showOpenDialog({
     properties: ["openFile", "multiSelections"],
     filters: [
-      { name: "Documents", extensions: ["pdf", "md", "markdown"] },
-      { name: "Images", extensions: ["png", "jpg", "jpeg", "webp"] },
+      { name: "Documents", extensions: ["pdf", "md", "markdown", "txt"] },
       { name: "All Files", extensions: ["*"] },
     ],
   })

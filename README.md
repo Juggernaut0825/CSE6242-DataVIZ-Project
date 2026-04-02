@@ -1,206 +1,425 @@
-# PaperMem Copilot
+# PaperMem
 
-A memory-augmented AI assistant with visual knowledge graph visualization, built for Georgia Tech CSE6242 Data and Visual Analytics.
+PaperMem is a local-first memory system and explainable dashboard for AI agents and chatbots, built for Georgia Tech CSE6242 Data and Visual Analytics. It combines an Electron desktop shell, a React graph-and-chat interface, a FastAPI memory backend, `Postgres + pgvector` for retrieval, and `Neo4j` for logical relation graphs.
 
-## Overview
+The current implementation is optimized for two memory sources:
 
-PaperMem Copilot is an intelligent conversation system that remembers and learns from your conversations. It combines a **GraphRAG-based memory system** with an **Electron desktop application** to provide context-aware responses with full transparency into its knowledge structure.
+- conversation history generated inside the app
+- uploaded documents such as PDF, Markdown, and plain text files
 
-### Key Features
+The system is designed to make retrieval visible. Every chat response is backed by retrieved memory units, graph expansion, and evidence cards that the user can inspect directly in the UI.
 
-- **Dual-Layer Memory Architecture**: Short-term (immediate) + Long-term (semantic knowledge graphs)
-- **Multi-Dimensional Search**: Search by time, topics, entities, and semantic relationships
-- **Visual Knowledge Graph**: Interactive visualization of facts, topics, and their connections
-- **Memory-Augmented Chat**: AI responses incorporate relevant past conversations
-- **Graph Expansion**: Multi-hop retrieval along semantic relationships
+## What The System Does
 
-## Architecture
+- stores chat turns and uploaded file chunks as unified memory units
+- embeds all memory units into `pgvector` for semantic retrieval
+- extracts lightweight semantic structure with an LLM-first pipeline plus local fallback
+- builds a logical knowledge graph in Neo4j using claims, concepts, entities, and relations
+- streams answers from the backend to the chat UI
+- renders a large interactive memory graph with semantic zoom and retrieval-driven overlays
+- supports a desktop quick-capture workflow through Electron
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    PaperMem Copilot App                      │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────┐  │
-│  │  Electron   │───▶│   FastAPI   │───▶│  GauzRag Memory │  │
-│  │  Frontend   │    │   Backend   │    │     System      │  │
-│  │  (React)    │◀───│  (Python)   │◀───│   (Python)      │  │
-│  └─────────────┘    └─────────────┘    └─────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-         ┌─────────┐    ┌─────────┐    ┌─────────┐
-         │  Neo4j  │    │  MySQL  │    │ Qdrant  │
-         │ (Graph) │    │  (SQL)  │    │ (Vector)│
-         └─────────┘    └─────────┘    └─────────┘
-```
+## Current Architecture
 
-## Project Structure
-
-```
-.
-├── Mem_System1/              # GauzRag Memory System
-│   ├── GauzRag/              # Core RAG implementation
-│   │   ├── api.py            # FastAPI endpoints
-│   │   ├── pipeline.py       # Memory processing pipeline
-│   │   ├── entity_extractor.py
-│   │   ├── fact_extractor.py
-│   │   ├── leiden_community_detector.py
-│   │   ├── vector_store.py   # Qdrant integration
-│   │   ├── neo4j_storage.py  # Graph database
-│   │   └── ...
-│   ├── run_api.py            # API server entry point
-│   └── requirements.txt
-│
-└── paper_app/                # Desktop Application
-    ├── frontend/             # React + Vite + Tailwind
-    │   └── src/App.jsx       # Main UI with graph visualization
-    ├── backend/              # FastAPI backend
-    │   └── app/
-    │       ├── main.py       # API endpoints
-    │       ├── memory_client.py  # GauzRag integration
-    │       ├── reasoner_agent.py # LLM reasoning
-    │       └── openrouter_client.py
-    └── electron/             # Desktop shell
-        └── main.js           # Window management
+```text
+User
+  |
+  v
+Electron desktop shell
+  |- main window: PaperMem dashboard
+  |- floating upload capsule
+  |- desktop integrations / IPC bridge
+  |
+  v
+React frontend (Vite + Tailwind + vis-network)
+  |- project sidebar
+  |- chat sessions and streaming messages
+  |- evidence / focus display
+  |- semantic zoom graph
+  |
+  v
+FastAPI backend
+  |- project + chat session APIs
+  |- file ingestion APIs
+  |- chat streaming API
+  |- graph retrieval APIs
+  |
+  +--> Postgres + pgvector
+  |     |- projects
+  |     |- chat sessions / messages
+  |     |- source files
+  |     |- memory units + embeddings
+  |     |- retrieval / reasoning records
+  |
+  +--> Neo4j
+        |- semantic nodes
+        |- logical relations
+        |- overlay graph for retrieval visualization
 ```
 
-## Components
+## End-To-End Flow
 
-### Mem_System1 - GauzRag Memory System
+### 1. File Ingestion
 
-A sophisticated RAG system implementing GraphRAG principles:
+1. A user uploads a file from the Electron capsule or desktop UI.
+2. The backend parses the file locally.
+3. The file is chunked into memory-sized segments.
+4. Each chunk is embedded and stored in `Postgres`.
+5. The semantic extraction service produces claims, concepts, entities, and display labels.
+6. The graph service writes semantic nodes and logical edges into `Neo4j`.
+7. The Electron shell sends an event back to the renderer so the graph can refresh automatically.
 
-| Component | Description |
-|-----------|-------------|
-| **Fact Extractor** | Extracts atomic facts from conversations |
-| **Entity Extractor** | Identifies entities and their types |
-| **Relation Builder** | Discovers relationships between facts |
-| **Community Detector** | Groups facts by topics using Leiden algorithm |
-| **Vector Store** | Semantic embeddings via Qdrant |
-| **Neo4j Storage** | Knowledge graph persistence |
+### 2. Conversation Ingestion
 
-**API Endpoints:**
-- `POST /extract` - Process conversations into memory
-- `POST /search` - Multi-dimensional search
-- `POST /agenticSearch` - Natural language to structured queries
-- `GET /search/time_dimension` - Temporal retrieval
-- `GET /fact/{id}/relations` - Relationship queries
+1. A user sends a chat message in the dashboard.
+2. The backend embeds the query and retrieves nearby memory units from `pgvector`.
+3. The backend expands the retrieved set using logical graph relations in `Neo4j`.
+4. The backend streams an answer from the configured LLM.
+5. The user turn and assistant turn are persisted as memory units.
+6. The conversation is folded back into the same memory + graph pipeline used for files.
 
-### paper_app - Desktop Application
+### 3. Visualization
 
-An Electron app providing the user interface:
+1. The frontend requests a graph snapshot for the active project.
+2. The backend computes graph scores and returns graph nodes and edges.
+3. The frontend applies client-side semantic zoom.
+4. Important nodes remain visible first, while lower-priority nodes appear as the user zooms in.
+5. Retrieval-related nodes and evidence appear in the chat area for the corresponding assistant response.
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | React + Vite + Tailwind | Chat UI, graph visualization |
-| **Backend** | FastAPI | API gateway, session management |
-| **Shell** | Electron | Cross-platform desktop wrapper |
+## Frontend
 
-**Features:**
-- Real-time streaming chat responses
-- Interactive knowledge graph visualization
-- Project-based memory isolation
-- Global hotkeys and clipboard integration
-- Overlay mode for quick capture
+The frontend lives in `paper_app/frontend` and is a single-page React application served by Vite.
 
-## Data Flow
+### Main Responsibilities
 
-```
-1. User sends message
-       ↓
-2. FastAPI receives at /chat/stream
-       ↓
-3. Query GauzRag /agenticSearch for relevant memories
-       ↓
-4. Construct context from retrieved facts & conversations
-       ↓
-5. Stream LLM response via OpenRouter
-       ↓
-6. Auto-extract conversation to GauzRag /extract
-       ↓
-7. Update knowledge graph visualization
-```
+- render the split layout: graph area + chat area
+- manage project selection and chat sessions
+- stream assistant responses in real time
+- display evidence and retrieval focus for each assistant message
+- render the graph with `vis-network`
+- apply semantic zoom behavior client-side
+- refresh the graph after uploads or manual user action
 
-## Installation
+### Important Files
+
+- `paper_app/frontend/src/App.jsx`
+  - main application state
+  - chat message rendering
+  - evidence / focus UI
+  - project and session management
+  - graph refresh and semantic zoom logic
+- `paper_app/frontend/src/index.css`
+  - global layout rules
+  - Tailwind entrypoint
+  - shared utility styles such as hidden scrollbars
+- `paper_app/frontend/src/main.jsx`
+  - app bootstrapping and error boundary mounting
+
+### Frontend Graph Model
+
+The graph is not rendered as a raw dump of every memory unit. Instead, the frontend applies a layered view:
+
+- high-importance nodes stay visible at low zoom
+- bridge / gatekeeper nodes are preserved to keep communities connected
+- node size reflects local importance rather than all nodes shrinking uniformly
+- the graph can be refreshed after new ingestion or further conversation
+
+The UI also distinguishes between:
+
+- the global project memory map
+- retrieval-driven overlays relevant to the current conversation
+
+## Electron Shell
+
+The Electron shell lives in `paper_app/electron`.
+
+### Responsibilities
+
+- launch the desktop window that hosts the PaperMem dashboard
+- expose a preload bridge so the renderer can call trusted native features
+- manage the floating upload capsule
+- notify the frontend when file ingestion completes
+- keep the desktop experience available outside a plain browser workflow
+
+### Important Files
+
+- `paper_app/electron/main.js`
+  - window lifecycle
+  - IPC handlers
+  - upload completion notifications
+- `paper_app/electron/preload.js`
+  - safe bridge exposed on `window.paperMem`
+- `paper_app/electron/dropzone.html`
+  - floating upload capsule UI
+
+## Backend
+
+The backend lives in `paper_app/backend` and is a FastAPI service that owns memory ingestion, retrieval, graph updates, and chat streaming.
+
+### Main Responsibilities
+
+- manage projects, sessions, messages, and files
+- parse uploaded files locally
+- chunk and embed text
+- persist memory units into `Postgres`
+- build and query logical graphs in `Neo4j`
+- retrieve evidence for chat queries
+- stream assistant responses and persist retrieval metadata
+
+### Important Files
+
+- `paper_app/backend/app/main.py`
+  - FastAPI application
+  - API routes for projects, sessions, files, graphs, and chat
+- `paper_app/backend/app/config.py`
+  - central settings model
+  - all required environment configuration
+- `paper_app/backend/app/database.py`
+  - SQLAlchemy engine/session setup
+  - `pgvector` extension initialization
+- `paper_app/backend/app/models.py`
+  - SQLAlchemy models for messages, memory units, files, and retrieval events
+- `paper_app/backend/app/schemas.py`
+  - request / response schema definitions
+- `paper_app/backend/app/openrouter_client.py`
+  - LLM client wrapper
+- `paper_app/backend/app/reasoner_agent.py`
+  - answer generation layer
+
+### Backend Services
+
+- `paper_app/backend/app/services/file_parser.py`
+  - parses PDF / Markdown / TXT locally
+  - sanitizes text for storage
+- `paper_app/backend/app/services/embedding_service.py`
+  - generates embeddings
+  - normalizes vector dimensions to the configured size
+- `paper_app/backend/app/services/semantic_service.py`
+  - extracts claims, concepts, entities, and display labels
+  - uses an LLM-first approach with local fallback
+- `paper_app/backend/app/services/graph_service.py`
+  - upserts semantic nodes and logical relations in Neo4j
+  - builds graph payloads for the frontend
+- `paper_app/backend/app/services/memory_service.py`
+  - orchestrates ingestion, persistence, retrieval, evidence creation, and trace metadata
+
+## Storage Layer
+
+### Postgres + pgvector
+
+`Postgres` is the system of record for structured application data and semantic retrieval.
+
+It stores:
+
+- projects
+- chat sessions
+- chat messages
+- source file records
+- memory units
+- embeddings
+- retrieval events
+- reasoning trace metadata
+
+The key design choice is to unify file chunks and conversation turns under the same `MemoryUnit` abstraction, so the same retrieval and graph-building pipeline can operate on both.
+
+### Neo4j
+
+`Neo4j` stores the semantic graph used for explainable reasoning and large-scale graph visualization.
+
+The graph contains:
+
+- semantic nodes such as claims, concepts, and entities
+- links from memory units to semantic nodes
+- logical relations such as support, causality, contradiction, elaboration, and association
+- retrieval overlays used to visualize the current reasoning context
+
+This graph is intentionally more logical than provenance-heavy so that the UI feels closer to a mind map than a file tree.
+
+## Memory Pipeline
+
+The current memory pipeline is intentionally lighter than the original GauzRag pipeline.
+
+### Ingestion Pipeline
+
+1. parse or receive text
+2. sanitize text
+3. chunk text
+4. embed chunks
+5. extract semantic bundles
+6. store memory units in `Postgres`
+7. write semantic nodes and relations to `Neo4j`
+
+### Retrieval Pipeline
+
+1. embed query
+2. semantic nearest-neighbor search in `pgvector`
+3. expand through graph relations
+4. collect evidence anchors
+5. stream answer generation
+6. persist retrieval metadata and reasoning records
+
+This keeps the system generalizable and fast enough for interactive use, while still surfacing semantic structure for visualization.
+
+## Semantic Extraction
+
+The semantic extraction stage produces:
+
+- `claims`
+- `concepts`
+- `entities`
+- relation candidates
+- `display_label` values for graph-friendly rendering
+
+The preferred behavior is prompt-driven. The LLM is asked to produce concise, mind-map-style labels directly during extraction instead of relying purely on post-processing heuristics in code.
+
+## Graph Visualization Strategy
+
+PaperMem is built to visualize more data than a naive full-graph rendering can handle.
+
+### Semantic Zoom
+
+The graph uses semantic zoom rather than simple geometric scaling:
+
+- zoomed-out views show a selective subgraph
+- node retention is driven by graph importance signals
+- more nodes appear as the user zooms in
+- bridge nodes are preserved so communities do not visually disconnect too early
+
+### Importance Heuristics
+
+The frontend and backend rely on graph-theoretic signals including:
+
+- centrality-style scores
+- betweenness-like bridge behavior
+- local connectivity / degree
+- retrieval relevance
+
+This is inspired by the CSE6242 graph algorithms material and is used to keep the large graph readable.
+
+## API Surface
+
+The most important backend capabilities exposed to the app are:
+
+- project creation / listing / deletion
+- chat session creation / activation / deletion
+- message retrieval for a session
+- file ingestion
+- graph retrieval for a project
+- streaming chat responses
+
+The chat stream returns not only text tokens, but also retrieval metadata that the frontend can attach to the assistant reply, such as:
+
+- evidence items
+- retrieval focus terms
+- graph overlay data
+
+## Local Development
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.9+
 - Node.js 18+
-- Neo4j (for graph storage)
-- MySQL (for structured data)
-- Qdrant (for vector search)
+- Docker Desktop
 
-### Mem_System1 Setup
+### 1. Start Databases
 
 ```bash
-cd Mem_System1
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys and database credentials
-
-# Start the API server
-python run_api.py
+docker compose up -d
 ```
 
-### Paper App Setup
+This starts:
+
+- `Postgres` on `127.0.0.1:5432`
+- `Neo4j` on `127.0.0.1:7474` and `127.0.0.1:7687`
+
+### 2. Configure Backend
+
+```bash
+cd paper_app/backend
+python3 -m venv .venv_local
+source .venv_local/bin/activate
+pip install -r requirements.txt
+cp env.example .env
+```
+
+Fill in the required keys in `paper_app/backend/.env`:
+
+```env
+LLM_API_KEY=
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL=openai/gpt-4o-mini
+
+EMBEDDING_API_KEY=
+EMBEDDING_BASE_URL=https://api.openai.com/v1
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_DIMENSIONS=256
+
+NEO4J_URI=bolt://127.0.0.1:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=papermemneo4j
+
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DATABASE=papermem
+```
+
+### 3. Start Backend
+
+```bash
+cd paper_app/backend
+source .venv_local/bin/activate
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 4. Install Desktop / Frontend Dependencies
 
 ```bash
 cd paper_app
-
-# Install dependencies
 npm install
-
-# Configure backend
-cd backend
-pip install -r requirements.txt
-cp env.example .env
-# Edit .env with GauzRag API URL
-
-# Start the app
-cd ..
-npm start
 ```
 
-## Configuration
+### 5. Start Electron + Frontend
 
-### Environment Variables
-
-**Mem_System1/.env:**
-```env
-OPENAI_API_KEY=your_key
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=password
-QDRANT_URL=http://localhost:6333
+```bash
+cd paper_app
+npm run dev
 ```
 
-**paper_app/backend/.env:**
-```env
-MEMORY_API_BASE=http://localhost:1235
-OPENROUTER_API_KEY=your_key
+This script does both:
+
+- starts the Vite renderer on `127.0.0.1:5173`
+- waits for the renderer, then launches Electron
+
+## Repository Layout
+
+```text
+.
+├── README.md
+├── docker-compose.yml
+├── Mem_System1/
+│   └── legacy GauzRag prototype and earlier experiments
+└── paper_app/
+    ├── electron/
+    ├── frontend/
+    └── backend/
 ```
 
-## Technology Stack
+## Legacy Folder Note
 
-| Category | Technologies |
-|----------|--------------|
-| **Frontend** | React, Vite, Tailwind CSS, D3.js |
-| **Backend** | FastAPI, Python |
-| **Desktop** | Electron |
-| **Databases** | Neo4j, MySQL, Qdrant |
-| **AI/ML** | OpenAI Embeddings, Leiden Algorithm |
-| **LLM** | OpenRouter (Gemini) |
+`Mem_System1` remains in the repository as the original memory-system prototype and reference implementation. The current desktop application does not depend on it for the active local-first stack. The production path for this project is the `paper_app` stack described above.
 
-## Authors
+## Git Notes
 
-Georgia Tech CSE6242 Team - Spring 2026
+The repository intentionally ignores local/demo-heavy assets such as:
 
-## License
+- generated virtual environments
+- local `.env` files
+- untracked demo directories like `papermem-demo/`
+- large local demo media such as `demo.gif`
+- local PDF test assets unless already tracked in git history
 
-MIT
+## Team
+
+Georgia Tech CSE6242 Team, Spring 2026

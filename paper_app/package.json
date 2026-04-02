@@ -16,7 +16,6 @@
   "license": "ISC",
   "dependencies": {
     "electron": "^37.4.0",
-    "minio": "^8.0.6",
     "uiohook-napi": "^1.5.4"
   },
   "devDependencies": {

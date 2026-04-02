@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from app.database import Base
+from app.config import settings
 
 
 def beijing_now() -> datetime:
@@ -56,5 +58,73 @@ class ChatMessage(Base):
     search_results = Column(Text)
     has_thinking = Column(Boolean, default=False)
     message_index = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=beijing_now, index=True)
+
+
+class SourceFile(Base):
+    __tablename__ = "source_files"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
+
+    filename = Column(String(512), nullable=False)
+    file_path = Column(Text)
+    file_hash = Column(String(128), nullable=False, index=True)
+    media_type = Column(String(64), nullable=False, index=True)
+    parser = Column(String(100), default="local")
+    page_count = Column(Integer, default=0)
+    status = Column(String(32), default="processed", index=True)
+    metadata_json = Column(JSON)
+
+    created_at = Column(DateTime, default=beijing_now, index=True)
+
+
+class MemoryUnit(Base):
+    __tablename__ = "memory_units"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
+    source_type = Column(String(64), nullable=False, index=True)
+    source_id = Column(String(255), nullable=False, index=True)
+    session_id = Column(String(36), ForeignKey("chat_sessions.id"), index=True)
+    file_id = Column(String(36), ForeignKey("source_files.id"), index=True)
+
+    text = Column(Text, nullable=False)
+    summary = Column(Text)
+    metadata_json = Column(JSON)
+    semantic_labels = Column(JSON)
+    embedding = Column(Vector(settings.embedding_dimensions), nullable=False)
+
+    created_at = Column(DateTime, default=beijing_now, index=True)
+
+
+class RetrievalEvent(Base):
+    __tablename__ = "retrieval_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
+    session_id = Column(String(36), ForeignKey("chat_sessions.id"), index=True)
+    query_text = Column(Text, nullable=False)
+    selected_unit_ids = Column(JSON)
+    metadata_json = Column(JSON)
+
+    created_at = Column(DateTime, default=beijing_now, index=True)
+
+
+class ReasoningTrace(Base):
+    __tablename__ = "reasoning_traces"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
+    session_id = Column(String(36), ForeignKey("chat_sessions.id"), index=True)
+    assistant_message_id = Column(String(36), ForeignKey("chat_messages.id"), index=True)
+
+    query_text = Column(Text, nullable=False)
+    answer_text = Column(Text)
+    semantic_nodes = Column(JSON)
+    reasoning_edges = Column(JSON)
+    citations = Column(JSON)
+    trace_steps = Column(JSON)
 
     created_at = Column(DateTime, default=beijing_now, index=True)

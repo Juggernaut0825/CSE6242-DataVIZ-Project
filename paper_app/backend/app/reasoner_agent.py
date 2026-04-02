@@ -8,7 +8,7 @@ class ReasonerAgent:
         self,
         system_prompt: str,
         max_iterations: int = 1,
-        model_provider: str = "gemini-3-flash",
+        model_provider: str = "gpt-4o-mini",
     ) -> None:
         self.system_prompt = system_prompt
         self.max_iterations = max_iterations
@@ -33,12 +33,12 @@ class ReasonerAgent:
 
             stream_response = await self.client.chat_completion(
                 messages=conversation,
-                model="google/gemini-3-flash-preview",
+                model=self.model_provider,
                 temperature=0.2,
                 max_tokens=8192,
                 stream=True,
-                enable_reasoning=True,
-                extra_body={"reasoning": {"enabled": True}},
+                enable_reasoning=False,
+                extra_body=None,
             )
 
             async for chunk in stream_response:
