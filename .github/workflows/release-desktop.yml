@@ -1,0 +1,65 @@
+# Push a version tag to build installers and attach them to a GitHub Release, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# Optional: set repo variable PAPERMEM_API_BASE_URL to your Railway API root (no trailing slash).
+# If unset, the default below is used.
+
+name: Release desktop
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: dist:mac
+            pattern: "release/*.dmg"
+          - os: windows-latest
+            script: dist:win
+            pattern: "release/*.exe"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Build
+        shell: bash
+        env:
+          VITE_API_BASE_URL: ${{ vars.PAPERMEM_API_BASE_URL }}
+        run: |
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            export VITE_API_BASE_URL="https://cse6242-dataviz-project-production.up.railway.app"
+          fi
+          npm run ${{ matrix.script }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: ${{ matrix.pattern }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          merge-multiple: true
+          path: release-assets
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

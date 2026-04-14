@@ -8,8 +8,13 @@
     "dev:renderer": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173",
     "dev:electron": "wait-on tcp:5173 && electron .",
     "build": "npm --prefix frontend run build",
+    "build:renderer": "npm --prefix frontend run build",
     "start": "electron .",
-    "postinstall": "electron-rebuild -f -w uiohook-napi"
+    "postinstall": "electron-rebuild -f -w uiohook-napi",
+    "write:api-base": "node scripts/write-electron-api-base.js",
+    "dist": "npm run write:api-base && npm run build:renderer && electron-builder",
+    "dist:mac": "npm run write:api-base && npm run build:renderer && electron-builder --mac dmg",
+    "dist:win": "npm run write:api-base && npm run build:renderer && electron-builder --win nsis"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +25,35 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "wait-on": "^8.0.5"
+  },
+  "build": {
+    "appId": "edu.gatech.cse6242.papermem",
+    "productName": "PaperMem",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "frontend/dist/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

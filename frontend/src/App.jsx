@@ -1,7 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Network } from "vis-network/standalone/esm/vis-network"
 
-const apiBase = window?.paperMem?.apiBase || "http://127.0.0.1:8000"
+function trimTrailingSlash(url) {
+  return String(url || "").replace(/\/+$/, "")
+}
+
+function resolveApiBase() {
+  const fromEnv = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL)
+  if (fromEnv) {
+    return fromEnv
+  }
+  const fromElectron = trimTrailingSlash(window?.paperMem?.apiBase)
+  if (fromElectron) {
+    return fromElectron
+  }
+  return "http://127.0.0.1:8000"
+}
+
+const apiBase = resolveApiBase()
 
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`
 

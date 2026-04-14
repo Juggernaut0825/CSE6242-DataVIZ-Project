@@ -35,7 +35,11 @@ pnpm-debug.log*
 # Build
 dist/
 build/
+release/
 *.egg-info/
+
+# Generated for packaged Electron (points renderer + main at remote API)
+electron/api-base.json
 
 # PDFs
 *.pdf

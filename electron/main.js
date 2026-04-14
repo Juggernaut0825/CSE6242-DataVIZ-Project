@@ -33,7 +33,40 @@ const DROPZONE_ACTIVE_WIDTH = 300
 const DROPZONE_ACTIVE_HEIGHT = 400
 const DROPZONE_PADDING = 20
 const EDGE_DROPZONE_SIZE = 200
-const BACKEND_URL = "http://127.0.0.1:8000/health"
+
+function trimTrailingSlash(url) {
+  return String(url || "").replace(/\/+$/, "")
+}
+
+function readPackagedApiBase() {
+  try {
+    const p = path.join(__dirname, "api-base.json")
+    if (fs.existsSync(p)) {
+      const j = JSON.parse(fs.readFileSync(p, "utf8"))
+      if (j.apiBase) {
+        return trimTrailingSlash(j.apiBase)
+      }
+    }
+  } catch (err) {
+    console.warn("[paperMem] api-base.json:", err.message)
+  }
+  return null
+}
+
+function getApiBase() {
+  const env = process.env.PAPERMEM_API_BASE || process.env.VITE_API_BASE_URL
+  if (env && String(env).trim()) {
+    return trimTrailingSlash(env)
+  }
+  const fromFile = readPackagedApiBase()
+  if (fromFile) {
+    return fromFile
+  }
+  return "http://127.0.0.1:8000"
+}
+
+const API_BASE = getApiBase()
+const BACKEND_URL = `${API_BASE}/health`
 
 const sendCopyShortcut = () =>
   new Promise((resolve) => {
@@ -369,7 +402,9 @@ const createWindow = () => {
 }
 
 app.whenReady().then(async () => {
-  await startBackend()
+  if (isDev) {
+    await startBackend()
+  }
   ensureAccessibilityPermissions()
   remindWindowsAdminPermission()
   createOverlayWindow()
@@ -417,7 +452,7 @@ ipcMain.handle("overlay-save", async () => {
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/extract", {
+    const response = await fetch(`${API_BASE}/extract`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -462,7 +497,7 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
     return { ok: false, error: "invalid_payload" }
   }
   try {
-    const response = await fetch("http://127.0.0.1:8000/files/ingest", {
+    const response = await fetch(`${API_BASE}/files/ingest`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

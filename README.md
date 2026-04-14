@@ -404,6 +404,22 @@ This script does both:
 └── ...
 ```
 
+## Desktop installers (DMG / EXE)
+
+You do **not** need a separate public website for the Electron app: `npm run build:renderer` produces `frontend/dist`, which `electron-builder` packs into the desktop installer. Point the UI at your deployed API with the same URL for both the renderer and the main process:
+
+```bash
+export VITE_API_BASE_URL="https://YOUR-APP.up.railway.app"
+npm run dist:mac    # macOS → release/*.dmg
+npm run dist:win    # Windows → release/*.exe (run on Windows or use CI)
+```
+
+`scripts/write-electron-api-base.js` writes `electron/api-base.json` from that URL so Electron IPC calls (`/extract`, `/files/ingest`) hit the same host as the React app.
+
+To publish builds on GitHub: push a version tag (`v1.0.0`). The workflow `.github/workflows/release-desktop.yml` builds macOS and Windows artifacts and attaches them to a Release.
+
+**Note:** Chat and graph work against a remote API. Drag-and-drop file ingest sends a **local file path** to `/files/ingest`; a cloud backend cannot read paths on the user’s machine, so that path may only work when the API runs locally unless you later add multipart upload APIs.
+
 ## Git Notes
 
 The repository intentionally ignores local/demo-heavy assets such as:
