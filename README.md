@@ -416,7 +416,7 @@ npm run dist:win    # Windows → release/*.exe (run on Windows or use CI)
 
 `scripts/write-electron-api-base.js` writes `electron/api-base.json` from that URL so Electron IPC calls (`/extract`, `/files/ingest`) hit the same host as the React app.
 
-To publish builds on GitHub: push a version tag (`v1.0.0`). The workflow `.github/workflows/release-desktop.yml` builds macOS and Windows artifacts and attaches them to a Release.
+To publish builds on GitHub: push a version tag (`v1.0.0`). The workflow `.github/workflows/release-desktop.yml` builds macOS and Windows artifacts and attaches them to a Release. Set variable **`PAPERMEM_API_BASE_URL`** on the **`production`** environment (repository **Settings → Environments → production**), or the workflow falls back to a default Railway URL.
 
 **Note:** Chat and graph work against a remote API. Drag-and-drop file ingest sends a **local file path** to `/files/ingest`; a cloud backend cannot read paths on the user’s machine, so that path may only work when the API runs locally unless you later add multipart upload APIs.
 
