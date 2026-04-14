@@ -1,8 +1,9 @@
 # Push a version tag to build installers and attach them to a GitHub Release, e.g.:
-#   git tag v1.0.0 && git push origin v1.0.0
+#   git tag v1.0.1 && git push origin v1.0.1
 #
-# Optional: set repo variable PAPERMEM_API_BASE_URL to your Railway API root (no trailing slash).
-# If unset, the default below is used.
+# API base URL: set variable PAPERMEM_API_BASE_URL on GitHub Environment "production"
+# (Settings → Environments → production → Environment variables).
+# Optional fallback below if the variable is empty. Trailing slashes are stripped.
 
 name: Release desktop
 
@@ -16,6 +17,7 @@ permissions:
 
 jobs:
   build:
+    environment: production
     strategy:
       fail-fast: false
       matrix:
@@ -39,9 +41,13 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ vars.PAPERMEM_API_BASE_URL }}
         run: |
-          if [ -z "$VITE_API_BASE_URL" ]; then
+          set -e
+          if [ -z "${VITE_API_BASE_URL:-}" ]; then
             export VITE_API_BASE_URL="https://cse6242-dataviz-project-production.up.railway.app"
           fi
+          # strip trailing slash (your env may use ...app/)
+          export VITE_API_BASE_URL="${VITE_API_BASE_URL%/}"
+          echo "Using VITE_API_BASE_URL=$VITE_API_BASE_URL"
           npm run ${{ matrix.script }}
       - uses: actions/upload-artifact@v4
         with:
