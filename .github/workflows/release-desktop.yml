@@ -1,9 +1,10 @@
 # Push a version tag to build installers and attach them to a GitHub Release, e.g.:
 #   git tag v1.0.1 && git push origin v1.0.1
 #
-# API base URL: set variable PAPERMEM_API_BASE_URL on GitHub Environment "production"
-# (Settings → Environments → production → Environment variables).
-# Optional fallback below if the variable is empty. Trailing slashes are stripped.
+# API base URL: set PAPERMEM_API_BASE_URL on the environment named "production".
+# The UI may show it as "<project> / production" (e.g. vivacious-playfulness / production);
+# that is still the "production" environment — use environment: production below.
+# Optional fallback if the variable is empty. Trailing slashes are stripped.
 
 name: Release desktop
 
