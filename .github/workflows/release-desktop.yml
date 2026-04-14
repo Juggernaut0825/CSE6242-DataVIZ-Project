@@ -40,7 +40,11 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-      - run: npm ci
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+      # Root + frontend are separate packages; vite lives under frontend/node_modules.
+      - run: npm ci && npm ci --prefix frontend
       - name: Build
         shell: bash
         env:
