@@ -88,7 +88,7 @@ FastAPI backend
 
 ## Frontend
 
-The frontend lives in `paper_app/frontend` and is a single-page React application served by Vite.
+The frontend lives in `frontend` and is a single-page React application served by Vite.
 
 ### Main Responsibilities
 
@@ -102,17 +102,17 @@ The frontend lives in `paper_app/frontend` and is a single-page React applicatio
 
 ### Important Files
 
-- `paper_app/frontend/src/App.jsx`
+- `frontend/src/App.jsx`
   - main application state
   - chat message rendering
   - evidence / focus UI
   - project and session management
   - graph refresh and semantic zoom logic
-- `paper_app/frontend/src/index.css`
+- `frontend/src/index.css`
   - global layout rules
   - Tailwind entrypoint
   - shared utility styles such as hidden scrollbars
-- `paper_app/frontend/src/main.jsx`
+- `frontend/src/main.jsx`
   - app bootstrapping and error boundary mounting
 
 ### Frontend Graph Model
@@ -131,7 +131,7 @@ The UI also distinguishes between:
 
 ## Electron Shell
 
-The Electron shell lives in `paper_app/electron`.
+The Electron shell lives in `electron`.
 
 ### Responsibilities
 
@@ -143,18 +143,18 @@ The Electron shell lives in `paper_app/electron`.
 
 ### Important Files
 
-- `paper_app/electron/main.js`
+- `electron/main.js`
   - window lifecycle
   - IPC handlers
   - upload completion notifications
-- `paper_app/electron/preload.js`
+- `electron/preload.js`
   - safe bridge exposed on `window.paperMem`
-- `paper_app/electron/dropzone.html`
+- `electron/dropzone.html`
   - floating upload capsule UI
 
 ## Backend
 
-The backend lives in `paper_app/backend` and is a FastAPI service that owns memory ingestion, retrieval, graph updates, and chat streaming.
+The backend lives in `backend` and is a FastAPI service that owns memory ingestion, retrieval, graph updates, and chat streaming.
 
 ### Main Responsibilities
 
@@ -168,39 +168,39 @@ The backend lives in `paper_app/backend` and is a FastAPI service that owns memo
 
 ### Important Files
 
-- `paper_app/backend/app/main.py`
+- `backend/app/main.py`
   - FastAPI application
   - API routes for projects, sessions, files, graphs, and chat
-- `paper_app/backend/app/config.py`
+- `backend/app/config.py`
   - central settings model
   - all required environment configuration
-- `paper_app/backend/app/database.py`
+- `backend/app/database.py`
   - SQLAlchemy engine/session setup
   - `pgvector` extension initialization
-- `paper_app/backend/app/models.py`
+- `backend/app/models.py`
   - SQLAlchemy models for messages, memory units, files, and retrieval events
-- `paper_app/backend/app/schemas.py`
+- `backend/app/schemas.py`
   - request / response schema definitions
-- `paper_app/backend/app/openrouter_client.py`
+- `backend/app/openrouter_client.py`
   - LLM client wrapper
-- `paper_app/backend/app/reasoner_agent.py`
+- `backend/app/reasoner_agent.py`
   - answer generation layer
 
 ### Backend Services
 
-- `paper_app/backend/app/services/file_parser.py`
+- `backend/app/services/file_parser.py`
   - parses PDF / Markdown / TXT locally
   - sanitizes text for storage
-- `paper_app/backend/app/services/embedding_service.py`
+- `backend/app/services/embedding_service.py`
   - generates embeddings
   - normalizes vector dimensions to the configured size
-- `paper_app/backend/app/services/semantic_service.py`
+- `backend/app/services/semantic_service.py`
   - extracts claims, concepts, entities, and display labels
   - uses an LLM-first approach with local fallback
-- `paper_app/backend/app/services/graph_service.py`
+- `backend/app/services/graph_service.py`
   - upserts semantic nodes and logical relations in Neo4j
   - builds graph payloads for the frontend
-- `paper_app/backend/app/services/memory_service.py`
+- `backend/app/services/memory_service.py`
   - orchestrates ingestion, persistence, retrieval, evidence creation, and trace metadata
 
 ## Storage Layer
@@ -335,14 +335,14 @@ This starts:
 ### 2. Configure Backend
 
 ```bash
-cd paper_app/backend
+cd backend
 python3 -m venv .venv_local
 source .venv_local/bin/activate
 pip install -r requirements.txt
 cp env.example .env
 ```
 
-Fill in the required keys in `paper_app/backend/.env`:
+Fill in the required keys in `backend/.env`:
 
 ```env
 LLM_API_KEY=
@@ -368,7 +368,7 @@ POSTGRES_DATABASE=papermem
 ### 3. Start Backend
 
 ```bash
-cd paper_app/backend
+cd backend
 source .venv_local/bin/activate
 python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
@@ -376,14 +376,12 @@ python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ### 4. Install Desktop / Frontend Dependencies
 
 ```bash
-cd paper_app
 npm install
 ```
 
 ### 5. Start Electron + Frontend
 
 ```bash
-cd paper_app
 npm run dev
 ```
 
@@ -396,19 +394,15 @@ This script does both:
 
 ```text
 .
+├── backend/
+├── electron/
+├── frontend/
+├── package.json
+├── package-lock.json
 ├── README.md
 ├── docker-compose.yml
-├── Mem_System1/
-│   └── legacy GauzRag prototype and earlier experiments
-└── paper_app/
-    ├── electron/
-    ├── frontend/
-    └── backend/
+└── ...
 ```
-
-## Legacy Folder Note
-
-`Mem_System1` remains in the repository as the original memory-system prototype and reference implementation. The current desktop application does not depend on it for the active local-first stack. The production path for this project is the `paper_app` stack described above.
 
 ## Git Notes
 

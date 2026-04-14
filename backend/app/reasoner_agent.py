@@ -63,12 +63,10 @@ class ReasonerAgent:
                     reasoning_parts.append(str(reasoning_delta))
                     yield {"type": "reasoning", "content": str(reasoning_delta)}
 
-                if hasattr(delta, "content") and delta.content:
-                    content_parts.append(delta.content)
-                    yield {"type": "content_chunk", "content": delta.content}
-
-                if chunk.choices[0].finish_reason:
-                    break
+                content_piece = getattr(delta, "content", None)
+                if content_piece:
+                    content_parts.append(content_piece)
+                    yield {"type": "content_chunk", "content": content_piece}
 
             if content_parts:
                 conversation.append(

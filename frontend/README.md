@@ -30,14 +30,14 @@ Electron Main
 
 ## 关键模块
 
-- Electron 主进程：`/Users/wangzijian/Desktop/gauz/paper_app/electron/main.js`
+- Electron 主进程：`electron/main.js`
   - 启动渲染进程与 FastAPI 子进程
-- 渲染进程入口：`/Users/wangzijian/Desktop/gauz/paper_app/frontend/src/main.jsx`
+- 渲染进程入口：`frontend/src/main.jsx`
   - React 应用启动与路由占位
-- FastAPI 入口：`/Users/wangzijian/Desktop/gauz/paper_app/backend/app/main.py`
+- FastAPI 入口：`backend/app/main.py`
   - `/extract`、`/agenticSearch` 代理
   - `/chat/stream` SSE 流式输出
-- ORM 模型：`/Users/wangzijian/Desktop/gauz/paper_app/backend/app/models.py`
+- ORM 模型：`backend/app/models.py`
   - `projects`、`chat_sessions` 表结构
 
 ## 数据流说明

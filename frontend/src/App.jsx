@@ -990,6 +990,17 @@ function App() {
                   : message
               )
             )
+          } else if (parsed.type === "error") {
+            setMessages((prev) =>
+              prev.map((message) =>
+                message.id === assistantId
+                  ? {
+                      ...message,
+                      content: parsed.message || "LLM request failed.",
+                    }
+                  : message
+              )
+            )
           }
         }
       }
@@ -1006,6 +1017,12 @@ function App() {
   const renderMessage = (message) => {
     const isUser = message.role === "user"
     const focusTerms = message.search?.focus_terms || []
+    const reasoningText =
+      !isUser && message.reasoning
+        ? typeof message.reasoning === "string"
+          ? message.reasoning
+          : JSON.stringify(message.reasoning, null, 2)
+        : ""
     return (
       <div
         key={message.id}
@@ -1017,7 +1034,9 @@ function App() {
           {isUser ? "User" : "PaperMem"}
         </div>
         <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-800">
-          {message.content || (sending && !isUser ? "Thinking..." : "")}
+          {message.content ||
+            reasoningText ||
+            (sending && !isUser ? "Thinking..." : "")}
         </div>
         {!isUser && focusTerms.length ? (
           <div className="mt-3 rounded-2xl bg-violet-50 p-3">

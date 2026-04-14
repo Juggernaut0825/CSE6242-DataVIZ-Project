@@ -10,6 +10,8 @@ __pycache__/
 .Python
 *.so
 .env
+.env.*
+!.env.example
 .venv/
 .venv_local/
 venv/
@@ -18,12 +20,17 @@ ENV/
 # Node
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+.claude/
 
 # Build
 dist/
@@ -41,3 +48,22 @@ logs/
 
 # Cache
 cache/
+.cache/
+.pytest_cache/
+
+# Secrets / credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.jks
+*.keystore
+*secret*
+*credential*
+secrets/
+
+# Legacy app folder
+Mem_System1/

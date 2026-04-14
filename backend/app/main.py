@@ -4,6 +4,7 @@ from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from openai import APIError, AuthenticationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -388,18 +389,32 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
 
     async def event_stream() -> AsyncGenerator[str, None]:
         full_content = ""
+        stream_error: Optional[str] = None
         user_message = save_message(db, project_id, session_id, "user", query)
         user_message_id = user_message.id
         yield f"data: {json.dumps({'type': 'search', 'payload': search_results}, ensure_ascii=False)}\n\n"
         for step in search_results["trace_steps"]:
             reasoning_text = f"{step['title']}: {step['detail']}\n"
             yield f"data: {json.dumps({'type': 'reasoning', 'content': reasoning_text}, ensure_ascii=False)}\n\n"
-        async for chunk in agent.stream(
-            f"User query:\n{query}\n\nRetrieved memory:\n{context_text}\n\nAnswer with grounded reasoning."
-        ):
-            if chunk.get("type") == "content_chunk":
-                full_content += chunk.get("content", "")
-            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+        try:
+            async for chunk in agent.stream(
+                f"User query:\n{query}\n\nRetrieved memory:\n{context_text}\n\nAnswer with grounded reasoning."
+            ):
+                if chunk.get("type") == "content_chunk":
+                    full_content += chunk.get("content", "")
+                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+        except AuthenticationError:
+            stream_error = (
+                "LLM authentication failed (401). Set a valid LLM_API_KEY from "
+                "https://openrouter.ai/keys in backend/.env and restart the server."
+            )
+            yield f"data: {json.dumps({'type': 'error', 'message': stream_error}, ensure_ascii=False)}\n\n"
+        except APIError as exc:
+            stream_error = getattr(exc, "message", None) or str(exc)
+            yield f"data: {json.dumps({'type': 'error', 'message': stream_error}, ensure_ascii=False)}\n\n"
+
+        trace_json = json.dumps(search_results["trace_steps"], ensure_ascii=False)
+        search_json = json.dumps(search_results, ensure_ascii=False)
 
         if full_content:
             assistant_message = save_message(
@@ -408,8 +423,8 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
                 session_id,
                 "assistant",
                 full_content,
-                reasoning_trace=json.dumps(search_results["trace_steps"], ensure_ascii=False),
-                search_results=json.dumps(search_results, ensure_ascii=False),
+                reasoning_trace=trace_json,
+                search_results=search_json,
             )
             assistant_message_id = assistant_message.id
             db.add(
@@ -443,6 +458,20 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
                 source_name="Chat Assistant",
                 session_id=session_id,
                 metadata={"role": "assistant", "message_id": assistant_message_id},
+            )
+        else:
+            fallback = stream_error or (
+                "No reply text was generated. If your model only streams internal reasoning, "
+                "set LLM_MODEL to a general chat model (e.g. openai/gpt-4o-mini) in backend .env."
+            )
+            save_message(
+                db,
+                project_id,
+                session_id,
+                "assistant",
+                fallback,
+                reasoning_trace=trace_json,
+                search_results=search_json,
             )
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
