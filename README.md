@@ -317,7 +317,7 @@ The chat stream returns not only text tokens, but also retrieval metadata that t
 
 ### Prerequisites
 
-- Python 3.9+
+- **Python 3.11+** (3.13 recommended; matches production). On macOS, use **Homebrew** Python—do **not** create the venv with Xcode’s bundled Python or `python3` may not land on your `PATH` after `activate`.
 - Node.js 18+
 - Docker Desktop
 
@@ -334,13 +334,20 @@ This starts:
 
 ### 2. Configure Backend
 
+Create the virtualenv with a **known** interpreter (adjust the path if your Homebrew prefix differs):
+
 ```bash
 cd backend
-python3 -m venv .venv_local
+/opt/homebrew/bin/python3.13 -m venv .venv_local
 source .venv_local/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 cp env.example .env
 ```
+
+After `source .venv_local/bin/activate`, use **`python`** and **`pip`** (not bare `python3` from Xcode) so `which python` resolves to `.venv_local/bin/python`.
+
+If you ever see `python: not found` after activating, open a new terminal and run `source .venv_local/bin/activate` again, or invoke the venv explicitly: `./.venv_local/bin/python -m uvicorn ...`.
 
 Fill in the required keys in `backend/.env`:
 
@@ -370,7 +377,7 @@ POSTGRES_DATABASE=papermem
 ```bash
 cd backend
 source .venv_local/bin/activate
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### 4. Install Desktop / Frontend Dependencies
@@ -414,11 +421,11 @@ npm run dist:mac    # macOS → release/*.dmg
 npm run dist:win    # Windows → release/*.exe (run on Windows or use CI)
 ```
 
-`scripts/write-electron-api-base.js` writes `electron/api-base.json` from that URL so Electron IPC calls (`/extract`, `/files/ingest`) hit the same host as the React app.
+`scripts/write-electron-api-base.js` writes `electron/api-base.json` from that URL so Electron IPC calls (`/extract`, file ingest) hit the same host as the React app.
 
 To publish builds on GitHub: push a version tag (`v1.0.0`). The workflow `.github/workflows/release-desktop.yml` builds macOS and Windows artifacts and attaches them to a Release. Set variable **`PAPERMEM_API_BASE_URL`** on the **`production`** environment (repository **Settings → Environments → production**), or the workflow falls back to a default Railway URL.
 
-**Note:** Chat and graph work against a remote API. Drag-and-drop file ingest sends a **local file path** to `/files/ingest`; a cloud backend cannot read paths on the user’s machine, so that path may only work when the API runs locally unless you later add multipart upload APIs.
+**Note:** Chat and graph work against a remote API. The Electron dropzone uploads file bytes with **`POST /files/ingest_upload`** (multipart), so ingestion works against a **deployed** backend. The JSON-only **`POST /files/ingest`** (local path on the API machine) remains useful for server-side debugging or when the API runs on the same machine as the files.
 
 ## Git Notes
 
