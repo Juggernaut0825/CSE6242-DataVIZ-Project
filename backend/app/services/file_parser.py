@@ -23,6 +23,10 @@ def compute_file_hash(file_path: Path) -> str:
     return digest.hexdigest()
 
 
+def compute_bytes_hash(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def parse_local_file(file_path: str) -> Dict[str, Any]:
     path = Path(file_path).expanduser().resolve()
     if not path.exists():
@@ -46,6 +50,46 @@ def parse_local_file(file_path: str) -> Dict[str, Any]:
         "filename": path.name,
         "file_path": str(path),
         "file_hash": compute_file_hash(path),
+        "media_type": media_type,
+        "parser": parser,
+        "page_count": page_count,
+        "chunks": chunks,
+    }
+
+
+def parse_file_bytes(filename: str, data: bytes) -> Dict[str, Any]:
+    """Parse PDF or text from uploaded bytes (no local filesystem path on the server)."""
+    name = Path(filename).name or "upload"
+    suffix = Path(name).suffix.lower()
+    media_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
+    parser = "text"
+    chunks: List[Dict[str, Any]]
+    page_count = 0
+
+    if suffix == ".pdf":
+        parser = "pymupdf"
+        document = fitz.open(stream=data, filetype="pdf")
+        try:
+            chunks = []
+            for page_index, page in enumerate(document):
+                text = sanitize_text(page.get_text("text")).strip()
+                if not text:
+                    continue
+                page_chunks = _chunk_text(text, name, page_index=page_index + 1)
+                chunks.extend(page_chunks)
+            page_count = document.page_count
+        finally:
+            document.close()
+    elif suffix in {".md", ".markdown", ".txt"}:
+        text = data.decode("utf-8", errors="ignore")
+        chunks = _chunk_text(text, name)
+    else:
+        raise ValueError(f"Unsupported file type: {suffix or name}")
+
+    return {
+        "filename": name,
+        "file_path": f"upload:{name}",
+        "file_hash": compute_bytes_hash(data),
         "media_type": media_type,
         "parser": parser,
         "page_count": page_count,

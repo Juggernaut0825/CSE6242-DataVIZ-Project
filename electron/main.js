@@ -497,13 +497,13 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
     return { ok: false, error: "invalid_payload" }
   }
   try {
-    const response = await fetch(`${API_BASE}/files/ingest`, {
+    const buffer = await fs.promises.readFile(payload.filePath)
+    const form = new FormData()
+    form.append("project_id", payload.projectId)
+    form.append("file", new Blob([buffer]), path.basename(payload.filePath))
+    const response = await fetch(`${API_BASE}/files/ingest_upload`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        file_path: payload.filePath,
-        project_id: payload.projectId,
-      }),
+      body: form,
     })
     if (!response.ok) {
       const detail = await response.text()

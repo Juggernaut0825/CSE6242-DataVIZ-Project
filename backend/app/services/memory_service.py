@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models import MemoryUnit, Project, RetrievalEvent, SourceFile, beijing_now
 from app.services.embedding_service import EmbeddingService
-from app.services.file_parser import parse_local_file, sanitize_text
+from app.services.file_parser import parse_file_bytes, parse_local_file, sanitize_text
 from app.services.graph_service import GraphService
 from app.services.semantic_service import SemanticService
 
@@ -86,6 +86,24 @@ class MemoryService:
         started_at = perf_counter()
         parsed = parse_local_file(file_path)
         parsed_at = perf_counter()
+        return await self._ingest_parsed_file(db, project_id, parsed, started_at, parsed_at)
+
+    async def ingest_file_bytes(
+        self, db: Session, project_id: str, filename: str, data: bytes
+    ) -> Dict[str, Any]:
+        started_at = perf_counter()
+        parsed = parse_file_bytes(filename, data)
+        parsed_at = perf_counter()
+        return await self._ingest_parsed_file(db, project_id, parsed, started_at, parsed_at)
+
+    async def _ingest_parsed_file(
+        self,
+        db: Session,
+        project_id: str,
+        parsed: Dict[str, Any],
+        started_at: float,
+        parsed_at: float,
+    ) -> Dict[str, Any]:
         source_file = SourceFile(
             project_id=project_id,
             filename=parsed["filename"],

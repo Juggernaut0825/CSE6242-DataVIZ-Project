@@ -1,7 +1,7 @@
 import json
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from openai import APIError, AuthenticationError
@@ -203,14 +203,23 @@ def activate_chat_session(session_id: str, db: Session = Depends(get_db)) -> Cha
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="chat session not found")
-    db.query(ChatSession).filter(ChatSession.project_id == session.project_id).update(
+    project_id = session.project_id
+    db.query(ChatSession).filter(ChatSession.project_id == project_id).update(
         {ChatSession.is_current: False},
         synchronize_session=False,
     )
-    session.is_current = True
+    updated = (
+        db.query(ChatSession)
+        .filter(ChatSession.id == session_id, ChatSession.project_id == project_id)
+        .update({ChatSession.is_current: True}, synchronize_session=False)
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="chat session not found")
     db.commit()
-    db.refresh(session)
-    return session
+    refreshed = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+    if not refreshed:
+        raise HTTPException(status_code=404, detail="chat session not found")
+    return refreshed
 
 
 @app.delete("/chat_sessions/{session_id}")
@@ -302,6 +311,24 @@ async def ingest_file(
         db=db,
         project_id=payload.project_id,
         file_path=payload.file_path,
+    )
+
+
+@app.post("/files/ingest_upload")
+async def ingest_file_upload(
+    project_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="empty file")
+    filename = file.filename or "upload"
+    return await memory_service.ingest_file_bytes(
+        db=db,
+        project_id=project_id,
+        filename=filename,
+        data=raw,
     )
 
 

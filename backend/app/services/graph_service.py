@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 import networkx as nx
 from neo4j import GraphDatabase
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import ServiceUnavailable, SessionExpired
 
 from app.config import settings
 
@@ -71,6 +71,8 @@ class GraphService:
         self.driver = GraphDatabase.driver(
             settings.neo4j_uri,
             auth=(settings.neo4j_user, settings.neo4j_password),
+            max_connection_lifetime=50 * 60,
+            connection_acquisition_timeout=60,
         )
 
     def wait_for_neo4j(self, max_wait_seconds: int = 90, initial_interval: float = 0.5) -> None:
@@ -386,46 +388,63 @@ class GraphService:
         return graph_payload
 
     def _load_semantic_graph(self, project_id: str) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        with self.driver.session() as session:
-            node_rows = session.run(
-                """
-                MATCH (n:SemanticNode {project_id: $project_id})
-                RETURN n.id AS id,
-                       n.name AS name,
-                       n.display_label AS display_label,
-                       n.kind AS kind
-                """,
-                project_id=project_id,
-            )
-            nodes = [
-                {
-                    "id": row["id"],
-                    "label": row["display_label"] or display_label_for_kind(row["kind"], row["name"]),
-                    "kind": row["kind"],
-                    "full_text": row["name"],
-                }
-                for row in node_rows
-            ]
-            edge_rows = session.run(
-                """
-                MATCH (a:SemanticNode {project_id: $project_id})-[r]->(b:SemanticNode {project_id: $project_id})
-                WHERE type(r) IN $types
-                RETURN a.id AS source, b.id AS target, type(r) AS type, coalesce(r.weight, 1.0) AS weight
-                """,
-                project_id=project_id,
-                types=list(RELATION_TYPES),
-            )
-            edges = [
-                {
-                    "id": f"{row['type']}:{row['source']}:{row['target']}",
-                    "source": row["source"],
-                    "target": row["target"],
-                    "type": row["type"],
-                    "weight": float(row["weight"] or 1.0),
-                }
-                for row in edge_rows
-            ]
-        return nodes, edges
+        last_exc: BaseException | None = None
+        for attempt in range(4):
+            try:
+                with self.driver.session() as session:
+                    node_rows = session.run(
+                        """
+                        MATCH (n:SemanticNode {project_id: $project_id})
+                        RETURN n.id AS id,
+                               n.name AS name,
+                               n.display_label AS display_label,
+                               n.kind AS kind
+                        """,
+                        project_id=project_id,
+                    )
+                    nodes = [
+                        {
+                            "id": row["id"],
+                            "label": row["display_label"] or display_label_for_kind(row["kind"], row["name"]),
+                            "kind": row["kind"],
+                            "full_text": row["name"],
+                        }
+                        for row in node_rows
+                    ]
+                    edge_rows = session.run(
+                        """
+                        MATCH (a:SemanticNode {project_id: $project_id})-[r]->(b:SemanticNode {project_id: $project_id})
+                        WHERE type(r) IN $types
+                        RETURN a.id AS source, b.id AS target, type(r) AS type, coalesce(r.weight, 1.0) AS weight
+                        """,
+                        project_id=project_id,
+                        types=list(RELATION_TYPES),
+                    )
+                    edges = [
+                        {
+                            "id": f"{row['type']}:{row['source']}:{row['target']}",
+                            "source": row["source"],
+                            "target": row["target"],
+                            "type": row["type"],
+                            "weight": float(row["weight"] or 1.0),
+                        }
+                        for row in edge_rows
+                    ]
+                return nodes, edges
+            except (ServiceUnavailable, SessionExpired, TimeoutError, OSError) as exc:
+                last_exc = exc
+                logger.warning(
+                    "Neo4j semantic graph read failed (attempt %s/4): %s",
+                    attempt + 1,
+                    exc,
+                )
+                time.sleep(min(0.25 * (2**attempt), 2.0))
+                try:
+                    self.driver.verify_connectivity()
+                except Exception:
+                    pass
+        assert last_exc is not None
+        raise last_exc
 
     def _select_macro_nodes(
         self,

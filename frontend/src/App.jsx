@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Network } from "vis-network/standalone/esm/vis-network"
 
 function trimTrailingSlash(url) {
@@ -572,6 +572,14 @@ function App() {
     loadProjects()
   }, [loadProjects])
 
+  useLayoutEffect(() => {
+    if (!activeProjectId) {
+      return
+    }
+    setActiveSessionId("")
+    setChatSessions([])
+  }, [activeProjectId])
+
   useEffect(() => {
     if (!activeProjectId) {
       return
@@ -579,7 +587,6 @@ function App() {
     if (window.paperMem?.setActiveProjectId) {
       window.paperMem.setActiveProjectId(activeProjectId)
     }
-    setActiveSessionId("")
     setGraphMode("global")
     setLiveGraph(null)
     setRetrievalHighlight(null)
@@ -590,8 +597,28 @@ function App() {
   }, [activeProjectId, graphView, loadChatSessions, loadGraph])
 
   useEffect(() => {
+    if (!activeProjectId) {
+      setMessages([])
+      return
+    }
+    if (loadingSessions) {
+      return
+    }
+    if (
+      activeSessionId &&
+      chatSessions.length > 0 &&
+      !chatSessions.some((session) => session.id === activeSessionId)
+    ) {
+      return
+    }
     loadMessages(activeProjectId, activeSessionId)
-  }, [activeProjectId, activeSessionId, loadMessages])
+  }, [
+    activeProjectId,
+    activeSessionId,
+    chatSessions,
+    loadingSessions,
+    loadMessages,
+  ])
 
   useEffect(() => {
     if (graphMode === "global") {
