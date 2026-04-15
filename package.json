@@ -1,7 +1,7 @@
 {
   "name": "paper_app",
   "version": "1.0.0",
-  "description": "",
+  "description": "PaperMem Electron shell with React frontend",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:electron\"",
@@ -32,6 +32,7 @@
   "build": {
     "appId": "edu.gatech.cse6242.papermem",
     "productName": "PaperMem",
+    "publish": null,
     "directories": {
       "output": "release"
     },
