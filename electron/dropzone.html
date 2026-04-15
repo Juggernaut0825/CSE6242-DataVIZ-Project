@@ -163,7 +163,7 @@
         height: 18px;
         border: none;
         border-radius: 999px;
-        display: none;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         background: rgba(255, 255, 255, 0.9);
@@ -172,10 +172,7 @@
         line-height: 1;
         cursor: pointer;
         box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-      }
-
-      .item:hover .remove-item-btn {
-        display: inline-flex;
+        z-index: 2;
       }
 
       .remove-item-btn:hover {
@@ -406,9 +403,15 @@
         newItems.forEach((item) => uploadItem(item))
       }
 
-      const removeItem = (itemId) => {
+      const removeItem = async (itemId) => {
         const item = state.items.find((entry) => entry.id === itemId)
-        if (item?.timer) {
+        if (!item) {
+          return
+        }
+        if (item.status === "processing" || item.status === "queued") {
+          await window.dropzoneApi.abortUpload(itemId)
+        }
+        if (item.timer) {
           clearInterval(item.timer)
           item.timer = null
         }
@@ -427,12 +430,24 @@
         const result = await window.dropzoneApi.uploadFile({
           filePath: item.path,
           projectId: state.activeProjectId,
+          uploadId: item.id,
         })
+        if (!state.items.some((entry) => entry.id === item.id)) {
+          return
+        }
+        if (result?.aborted) {
+          return
+        }
         if (!result?.ok) {
+          const err =
+            result?.error === "timeout"
+              ? "timeout"
+              : result?.error || "upload_failed"
           window.dropzoneApi.logError({
             stage: "local_ingest",
             file: item.name,
-            error: result?.error || "upload_failed",
+            error: err,
+            detail: result?.detail || "",
           })
           finishItem(item, false)
           return
@@ -454,7 +469,9 @@
             return
           }
           item.progress = Math.max(item.progress, next)
-          render()
+          if (state.mode !== "idle") {
+            render()
+          }
         }, 500)
       }
 
@@ -518,16 +535,11 @@
             state.warningMessage = state.activeProjectId
               ? ""
               : "Select a project in the main app first"
-            ensureMode("dragging")
+            ensureMode(state.items.length > 0 ? "processing" : "dragging")
           }
           if (target?.closest?.(".close-btn")) {
             state.isPinned = false
-            const hasProcessing = state.items.some(
-              (item) => item.status === "processing"
-            )
-            if (!hasProcessing) {
-              ensureMode("idle")
-            }
+            ensureMode("idle")
           }
           if (target?.closest?.(".pick-btn")) {
             window.dropzoneApi.pickFiles().then((result) => {
@@ -538,7 +550,9 @@
           }
           const removeButton = target?.closest?.("[data-remove-item]")
           if (removeButton) {
-            removeItem(removeButton.getAttribute("data-remove-item"))
+            event.stopPropagation()
+            event.preventDefault()
+            void removeItem(removeButton.getAttribute("data-remove-item"))
           }
         })
         render()

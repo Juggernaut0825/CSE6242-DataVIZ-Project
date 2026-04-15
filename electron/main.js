@@ -68,6 +68,10 @@ function getApiBase() {
 const API_BASE = getApiBase()
 const BACKEND_URL = `${API_BASE}/health`
 
+/** Per-upload AbortController for dropzone (cancel ×); keyed by renderer-provided uploadId */
+const dropzoneUploadAborts = new Map()
+const DROPZONE_UPLOAD_RESPONSE_MS = 15 * 60 * 1000
+
 const sendCopyShortcut = () =>
   new Promise((resolve) => {
     if (process.platform === "darwin") {
@@ -496,6 +500,16 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
   if (!payload?.filePath || !payload?.projectId) {
     return { ok: false, error: "invalid_payload" }
   }
+  const uploadId = payload.uploadId || `upload-${Date.now()}`
+  const userController = new AbortController()
+  dropzoneUploadAborts.set(uploadId, userController)
+  let signal = userController.signal
+  if (typeof AbortSignal !== "undefined" && AbortSignal.any && AbortSignal.timeout) {
+    signal = AbortSignal.any([
+      userController.signal,
+      AbortSignal.timeout(DROPZONE_UPLOAD_RESPONSE_MS),
+    ])
+  }
   try {
     const buffer = await fs.promises.readFile(payload.filePath)
     const form = new FormData()
@@ -504,12 +518,22 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
     const response = await fetch(`${API_BASE}/files/ingest_upload`, {
       method: "POST",
       body: form,
+      signal,
     })
     if (!response.ok) {
       const detail = await response.text()
       return { ok: false, error: detail || "ingest_failed" }
     }
-    const result = await response.json()
+    const rawText = await response.text()
+    let result = {}
+    try {
+      result = rawText ? JSON.parse(rawText) : {}
+    } catch (parseErr) {
+      console.warn("[dropzone-upload] 200 OK but JSON parse failed; treating as success", {
+        snippet: rawText?.slice?.(0, 240),
+        message: parseErr?.message || parseErr,
+      })
+    }
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("memory-file-ingested", {
         projectId: payload.projectId,
@@ -520,13 +544,38 @@ ipcMain.handle("dropzone-upload", async (_event, payload) => {
     }
     return { ok: true, result }
   } catch (error) {
+    const name = error?.name || ""
+    if (name === "AbortError" || name === "TimeoutError") {
+      if (userController.signal.aborted) {
+        return { ok: false, aborted: true }
+      }
+      return {
+        ok: false,
+        error: "timeout",
+        detail: "Server took too long to respond (ingest can take several minutes for large PDFs).",
+      }
+    }
     console.error("[dropzone-upload] failed", {
       filePath: payload.filePath,
       projectId: payload.projectId,
       message: error?.message || error,
     })
     return { ok: false, error: "upload_failed" }
+  } finally {
+    dropzoneUploadAborts.delete(uploadId)
   }
+})
+
+ipcMain.handle("dropzone-abort-upload", (_event, uploadId) => {
+  if (!uploadId) {
+    return { ok: false }
+  }
+  const ctrl = dropzoneUploadAborts.get(uploadId)
+  if (ctrl) {
+    ctrl.abort()
+    return { ok: true }
+  }
+  return { ok: false }
 })
 
 ipcMain.handle("dropzone-pick-files", async () => {
