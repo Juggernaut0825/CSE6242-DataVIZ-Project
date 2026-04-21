@@ -27,12 +27,22 @@ class Settings(BaseSettings):
     embedding_base_url: str = "https://api.openai.com/v1"
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 256
+    embedding_batch_size: int = 96
 
     retrieval_top_k: int = 6
     graph_expansion_hops: int = 2
     chunk_size: int = 900
     chunk_overlap: int = 150
     semantic_zoom_default: str = "macro"
+    semantic_llm_enabled: bool = True
+    semantic_llm_file_sample_ratio: float = 0.34
+    semantic_llm_file_sample_min: int = 8
+    semantic_llm_file_sample_max: int = 0
+    semantic_llm_selection_strategy: str = "mmr"
+    semantic_llm_conversation_sample_limit: int = 4
+    semantic_llm_timeout_seconds: float = 8.0
+    semantic_llm_concurrency: int = 4
+    relation_link_top_k: int = 2
 
     class Config:
         env_file = (".env", "../.env")

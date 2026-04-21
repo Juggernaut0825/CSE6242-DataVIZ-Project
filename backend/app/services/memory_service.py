@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
+import re
 from time import perf_counter
 import uuid
 from typing import Any, Dict, List, Sequence
@@ -9,6 +11,7 @@ from typing import Any, Dict, List, Sequence
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models import MemoryUnit, Project, RetrievalEvent, SourceFile, beijing_now
 from app.services.embedding_service import EmbeddingService
 from app.services.file_parser import parse_file_bytes, parse_local_file, sanitize_text
@@ -46,6 +49,7 @@ class MemoryService:
         labels_by_chunk = await self._extract_labels_for_chunks(
             [item["text"] for item in chunks],
             source_type=source_type,
+            embeddings=embeddings,
         )
         labeled_at = perf_counter()
         created_units = await self._persist_units(
@@ -127,6 +131,7 @@ class MemoryService:
         labels_by_chunk = await self._extract_labels_for_chunks(
             [item["text"] for item in parsed["chunks"]],
             source_type="file_chunk",
+            embeddings=embeddings,
         )
         labeled_at = perf_counter()
         created_units = await self._persist_units(
@@ -329,7 +334,18 @@ class MemoryService:
         persisted_at = perf_counter()
 
         for unit_index, unit in enumerate(created_units, start=1):
-            related = self._search_related_units(db, project_id, unit.embedding, exclude_ids=[unit.id], top_k=3)
+            relation_top_k = max(0, settings.relation_link_top_k)
+            related = (
+                self._search_related_units(
+                    db,
+                    project_id,
+                    unit.embedding,
+                    exclude_ids=[unit.id],
+                    top_k=relation_top_k,
+                )
+                if relation_top_k
+                else []
+            )
             relation_hits = 0
             for neighbor in related:
                 relation = self.semantic_service.classify_unit_relation(
@@ -367,10 +383,16 @@ class MemoryService:
         self,
         texts: Sequence[str],
         source_type: str,
+        embeddings: Sequence[Sequence[float]] | None = None,
     ) -> List[Dict[str, Any]]:
         started_at = perf_counter()
-        semaphore = asyncio.Semaphore(6 if source_type == "file_chunk" else 4)
-        llm_indexes = self._llm_indexes_for_source(source_type, len(texts))
+        semaphore = asyncio.Semaphore(max(1, settings.semantic_llm_concurrency))
+        llm_indexes = self._llm_indexes_for_source(
+            source_type,
+            len(texts),
+            texts=texts,
+            embeddings=embeddings,
+        )
 
         async def run(index: int, text: str) -> Dict[str, Any]:
             async with semaphore:
@@ -387,10 +409,111 @@ class MemoryService:
         )
         return labels
 
-    def _llm_indexes_for_source(self, source_type: str, count: int) -> set[int]:
-        if count <= 0:
+    def _llm_indexes_for_source(
+        self,
+        source_type: str,
+        count: int,
+        texts: Sequence[str] | None = None,
+        embeddings: Sequence[Sequence[float]] | None = None,
+    ) -> set[int]:
+        if count <= 0 or not settings.semantic_llm_enabled:
             return set()
-        return set(range(count))
+        if source_type == "file_chunk":
+            target = self._file_llm_target_count(count)
+            if target <= 0:
+                return set()
+            if target >= count:
+                return set(range(count))
+            if (
+                settings.semantic_llm_selection_strategy.lower() == "mmr"
+                and texts is not None
+                and embeddings is not None
+                and len(embeddings) == count
+            ):
+                return self._select_mmr_indexes(texts, embeddings, target)
+            return self._select_evenly_spaced_indexes(count, target)
+        limit = max(0, settings.semantic_llm_conversation_sample_limit)
+        return set(range(min(count, limit)))
+
+    def _file_llm_target_count(self, count: int) -> int:
+        ratio = max(0.0, settings.semantic_llm_file_sample_ratio)
+        target = math.ceil(count * ratio)
+        target = max(target, min(count, max(0, settings.semantic_llm_file_sample_min)))
+        max_count = max(0, settings.semantic_llm_file_sample_max)
+        if max_count:
+            target = min(target, max_count)
+        return min(count, target)
+
+    def _select_evenly_spaced_indexes(self, count: int, target: int) -> set[int]:
+        if target <= 0:
+            return set()
+        if target >= count:
+            return set(range(count))
+        if target == 1:
+            return {0}
+        step = (count - 1) / float(target - 1)
+        return {round(index * step) for index in range(target)}
+
+    def _select_mmr_indexes(
+        self,
+        texts: Sequence[str],
+        embeddings: Sequence[Sequence[float]],
+        target: int,
+    ) -> set[int]:
+        count = len(texts)
+        selected = {0, count - 1}
+        salience = [self._chunk_salience(text) for text in texts]
+        while len(selected) < target:
+            best_index = None
+            best_score = float("-inf")
+            for index in range(count):
+                if index in selected:
+                    continue
+                max_similarity = max(
+                    self._cosine_similarity(embeddings[index], embeddings[selected_index])
+                    for selected_index in selected
+                )
+                position_spread = min(abs(index - selected_index) for selected_index in selected) / max(1, count - 1)
+                score = 0.50 * salience[index] - 0.30 * max_similarity + 0.20 * position_spread
+                if score > best_score:
+                    best_score = score
+                    best_index = index
+            if best_index is None:
+                break
+            selected.add(best_index)
+        return selected
+
+    def _chunk_salience(self, text: str) -> float:
+        snippet = (text or "")[:1600]
+        length_score = min(len(snippet) / 900.0, 1.0)
+        number_score = min(len(re.findall(r"\b\d+(?:\.\d+)?%?\b", snippet)) / 8.0, 1.0)
+        acronym_score = min(len(re.findall(r"\b[A-Z]{2,}\b", snippet)) / 8.0, 1.0)
+        entity_score = min(len(re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b", snippet)) / 8.0, 1.0)
+        heading_score = 1.0 if re.match(r"^\s*(?:[#*\-]+\s*)?[A-Z][A-Za-z0-9 ,:/()_-]{3,90}(?:\n|:)", text or "") else 0.0
+        signal_score = 1.0 if re.search(
+            r"\b(summary|conclusion|result|finding|method|approach|limitation|risk|decision|requirement|definition|experiment|evaluation)\b",
+            snippet,
+            flags=re.IGNORECASE,
+        ) else 0.0
+        return (
+            0.30 * length_score
+            + 0.18 * number_score
+            + 0.14 * acronym_score
+            + 0.14 * entity_score
+            + 0.12 * heading_score
+            + 0.12 * signal_score
+        )
+
+    def _cosine_similarity(self, left: Sequence[float], right: Sequence[float]) -> float:
+        size = min(len(left), len(right))
+        if size == 0:
+            return 0.0
+        dot = sum(float(left[index]) * float(right[index]) for index in range(size))
+        left_norm = math.sqrt(sum(float(value) * float(value) for value in left[:size]))
+        right_norm = math.sqrt(sum(float(value) * float(value) for value in right[:size]))
+        if left_norm == 0.0 or right_norm == 0.0:
+            return 0.0
+        return dot / (left_norm * right_norm)
 
     def _search_related_units(
         self,

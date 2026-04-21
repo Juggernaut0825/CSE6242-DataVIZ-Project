@@ -380,6 +380,7 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
     project_id = payload.get("project_id")
     top_k = int(payload.get("top_k") or settings.retrieval_top_k)
     requested_session_id = payload.get("session_id")
+    skip_memory_ingest = bool(payload.get("skip_memory_ingest"))
     if not query or not project_id:
         raise HTTPException(status_code=400, detail="query and project_id are required")
 
@@ -468,24 +469,25 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
                 )
             )
             db.commit()
-            await memory_service.ingest_capture(
-                db=db,
-                project_id=project_id,
-                text=query,
-                source_type="conversation_turn",
-                source_name="Chat User",
-                session_id=session_id,
-                metadata={"role": "user", "message_id": user_message_id},
-            )
-            await memory_service.ingest_capture(
-                db=db,
-                project_id=project_id,
-                text=full_content,
-                source_type="conversation_turn",
-                source_name="Chat Assistant",
-                session_id=session_id,
-                metadata={"role": "assistant", "message_id": assistant_message_id},
-            )
+            if not skip_memory_ingest:
+                await memory_service.ingest_capture(
+                    db=db,
+                    project_id=project_id,
+                    text=query,
+                    source_type="conversation_turn",
+                    source_name="Chat User",
+                    session_id=session_id,
+                    metadata={"role": "user", "message_id": user_message_id},
+                )
+                await memory_service.ingest_capture(
+                    db=db,
+                    project_id=project_id,
+                    text=full_content,
+                    source_type="conversation_turn",
+                    source_name="Chat Assistant",
+                    session_id=session_id,
+                    metadata={"role": "assistant", "message_id": assistant_message_id},
+                )
         else:
             fallback = stream_error or (
                 "No reply text was generated. If your model only streams internal reasoning, "

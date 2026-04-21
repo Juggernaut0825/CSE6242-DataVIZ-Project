@@ -1,0 +1,702 @@
+[
+  {
+    "id": "q_2402.11651_01",
+    "paper_id": "2402.11651",
+    "question": "What is the core idea of negative-aware training (NAT), and how does it differ from negative-unaware training (NUT) when incorporating unsuccessful trajectories?",
+    "golden_answer": "NAT reformats training data so the model is explicitly told whether it should generate a successful trajectory, typically by adding a prefix or suffix that marks correctness. This lets the model distinguish correct from incorrect interactions while learning from both positive and negative examples. In contrast, NUT simply mixes positive and negative trajectories without such explicit indicators.",
+    "evidence_hint": "Section 3 and abstract: adding a prefix or suffix; differentiate correct and incorrect interactions",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4936,
+      "completion_tokens": 724,
+      "total_tokens": 5660
+    }
+  },
+  {
+    "id": "q_2402.11651_02",
+    "paper_id": "2402.11651",
+    "question": "Which task is used for the paper's detailed analysis of negative examples, and what reason do the authors give for choosing it?",
+    "golden_answer": "The detailed analysis is conducted on the math task because only the math task contains enough data for their experiments.",
+    "evidence_hint": "Section 5 analysis setup: only the math task contains enough data",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4936,
+      "completion_tokens": 724,
+      "total_tokens": 5660
+    }
+  },
+  {
+    "id": "q_2402.11651_03",
+    "paper_id": "2402.11651",
+    "question": "In the analysis of training sample quantity, when does performance stop improving substantially as more negative samples are added, and under what positive-sample settings was this observed?",
+    "golden_answer": "Performance improves as more negative data is added and then plateaus at about 11k negative samples. This was observed when the number of positive samples was fixed at 2k and 5k.",
+    "evidence_hint": "Figure 2 and Section 5.1: 2k and 5k positives, plateau around 11k negatives",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4936,
+      "completion_tokens": 724,
+      "total_tokens": 5660
+    }
+  },
+  {
+    "id": "q_2402.11651_04",
+    "paper_id": "2402.11651",
+    "question": "According to the authors, what two main factors determine the ideal ratio of negative samples during training?",
+    "golden_answer": "The ideal ratio is influenced by (1) the number of positive samples, since the gains from negatives are larger when there are fewer positives, and (2) the intrinsic quality of the negative samples.",
+    "evidence_hint": "Section 5.1 discussion after Figure 3",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4936,
+      "completion_tokens": 724,
+      "total_tokens": 5660
+    }
+  },
+  {
+    "id": "q_2402.11651_05",
+    "paper_id": "2402.11651",
+    "question": "Using the redwood example in Figure 7, how do the errors made by the Vanilla and NUT models differ, and what answer does the NAT model produce?",
+    "golden_answer": "In Figure 7, the Vanilla model fails due to a reasoning error, while the NUT model fails due to an action error. The NAT model gives the correct answer: 5600.",
+    "evidence_hint": "Figure 7 caption and example outputs",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4936,
+      "completion_tokens": 724,
+      "total_tokens": 5660
+    }
+  },
+  {
+    "id": "q_2310.00034_01",
+    "paper_id": "2310.00034",
+    "question": "What is the core idea of PB-LLM, and how does it treat salient versus non-salient weights during binarization?",
+    "golden_answer": "PB-LLM partially binarizes LLM weights by filtering out a small subset of salient weights and storing them in higher precision, while binarizing the remaining weights to 1 bit. In QAT, the salient weights are frozen during training, and the residual binarized weights are scaled using a derived optimal scaling strategy.",
+    "evidence_hint": "Figure 1 caption and introduction describing partially-binarized weights and frozen salient weights",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5658,
+      "completion_tokens": 855,
+      "total_tokens": 6513
+    }
+  },
+  {
+    "id": "q_2310.00034_02",
+    "paper_id": "2310.00034",
+    "question": "According to the paper's storage-cost analysis, what is the maximum effective bit-width when 10% of weights are kept as salient weights in 8-bit precision and the remaining 90% are binarized?",
+    "golden_answer": "At most 2.7 bits.",
+    "evidence_hint": "Page 5 storage-cost discussion below Eq. 3 and Figure 4",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5658,
+      "completion_tokens": 855,
+      "total_tokens": 6513
+    }
+  },
+  {
+    "id": "q_2310.00034_03",
+    "paper_id": "2310.00034",
+    "question": "In the zero-shot common sense reasoning experiments on LLaMA-7B under a 4-bit setting, what average score does PB-LLM 30% achieve, and how does it compare with LLM-QAT and full-precision LLaMA-7B?",
+    "golden_answer": "PB-LLM 30% achieves an average score of 66.9. This is slightly higher than LLM-QAT's 66.6 and below full-precision LLaMA-7B's 68.7.",
+    "evidence_hint": "Table 2 average column for PB-LLM 30%, LLM-QAT, and FP LLaMA-7B",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5658,
+      "completion_tokens": 855,
+      "total_tokens": 6513
+    }
+  },
+  {
+    "id": "q_2310.00034_04",
+    "paper_id": "2310.00034",
+    "question": "Describe the training setup used for PB-LLM in the experiments: include the dataset, optimizer, learning rate schedule, batch size, and number of fine-tuning iterations.",
+    "golden_answer": "PB-LLM is trained on RedPajama-simple-1B, a 0.1% subset of RedPajama-1T. It starts from a pretrained model and uses AdamW with zero weight decay, batch size 1 per GPU, learning rate 2e-5, cosine learning rate decay, and 10K fine-tuning iterations.",
+    "evidence_hint": "Section 4.1 Experimental Setup: Dataset and Training Details",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5658,
+      "completion_tokens": 855,
+      "total_tokens": 6513
+    }
+  },
+  {
+    "id": "q_2310.00034_05",
+    "paper_id": "2310.00034",
+    "question": "What limitation of existing binarization methods for LLMs is shown in the paper, and what evidence is provided from the supplementary results?",
+    "golden_answer": "The paper shows that naively applying existing popular binarization methods to LLMs fails badly, often performing worse than random guessing. In the supplementary table, methods such as BNN, XNOR, Bi-Real, ReCU, and FDA on OPT have mean scores around 0.30–0.32, while random performance is 0.36.",
+    "evidence_hint": "Supplement A.1 and Table 4 comparing existing binarization methods with random performance",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5658,
+      "completion_tokens": 855,
+      "total_tokens": 6513
+    }
+  },
+  {
+    "id": "q_2312.10793_01",
+    "paper_id": "2312.10793",
+    "question": "How did the authors construct the three instruction datasets used for fine-tuning, and how many training instances from each dataset were ultimately used in the balanced comparison?",
+    "golden_answer": "They used Alpaca as the general instruction dataset (originally 52K instruction-response pairs), P3 as the NLP task instruction dataset (built by sampling 1K instances from each subtask with several prompts, yielding 660K samples), and CodeAlpaca as the coding dataset (20K samples). For balanced comparison, they randomly sampled 20K instances from each dataset.",
+    "evidence_hint": "Section 3 Experimental Setup, Datasets",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4946,
+      "completion_tokens": 821,
+      "total_tokens": 5767
+    }
+  },
+  {
+    "id": "q_2312.10793_02",
+    "paper_id": "2312.10793",
+    "question": "What evaluation setup did the paper use to measure NLP performance, coding ability, and alignment/chat ability, including the specific benchmarks or framework involved?",
+    "golden_answer": "For NLP, they evaluated on ARC, Winogrande, PIQA, MMLU, RACE, and HellaSwag. For coding, they used HumanEval to test code generation pass rates. For alignment/chat ability, they used the FLASK framework, kept the eight most frequent alignment skills from the original set for 1,180 samples, and used GPT-4 to score model responses according to human-written principles.",
+    "evidence_hint": "Section 3 Experimental Setup, Evaluation",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4946,
+      "completion_tokens": 821,
+      "total_tokens": 5767
+    }
+  },
+  {
+    "id": "q_2312.10793_03",
+    "paper_id": "2312.10793",
+    "question": "According to the ablation on instruction mixing ratios, how did benchmark performance change as the ratio of specialized instructions increased, and at what ratio did both NLP and code performance peak?",
+    "golden_answer": "With the number of general instructions fixed to 20K, both NLP-task and code-benchmark scores first decreased and then increased as the ratio of specialized instructions grew. Both peaked at a ratio of 1.5, then dropped slightly when the ratio increased further to 2.0.",
+    "evidence_hint": "Section discussing mixing ratios and Figure 2",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4946,
+      "completion_tokens": 821,
+      "total_tokens": 5767
+    }
+  },
+  {
+    "id": "q_2312.10793_04",
+    "paper_id": "2312.10793",
+    "question": "What specific effect did mixing P3 data have on alignment skills for the 7B and 13B models, and how do the authors interpret this result?",
+    "golden_answer": "Mixing P3 data caused alignment-skill drops of 2.8 points for the 7B model and 3.6 points for the 13B model. The authors interpret this as evidence that P3 negatively impacts the fine-tuning of chatbot-style LLMs and hurts conversational ability.",
+    "evidence_hint": "Section 4.2 Alignment Skill Results",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4946,
+      "completion_tokens": 821,
+      "total_tokens": 5767
+    }
+  },
+  {
+    "id": "q_2312.10793_05",
+    "paper_id": "2312.10793",
+    "question": "What limitations do the authors explicitly acknowledge about their study design and scope?",
+    "golden_answer": "They explicitly note that they only experimented with LLaMA-2 7B and 13B, so other model families and sizes should be tested to verify the findings. They also acknowledge that behavior may vary by model size, and larger models may handle more instructions without performance degradation.",
+    "evidence_hint": "Limitations section",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4946,
+      "completion_tokens": 821,
+      "total_tokens": 5767
+    }
+  },
+  {
+    "id": "q_2401.10034_01",
+    "paper_id": "2401.10034",
+    "question": "How does the paper organize the interaction between large language models and evolutionary algorithms, and what application scenarios are explicitly named to illustrate their integrated synergy?",
+    "golden_answer": "The survey organizes the interaction into two main avenues: LLM-enhanced EA and EA-enhanced LLM. It further highlights integrated synergy methods in application scenarios including code generation, software engineering, neural architecture search, and various generation tasks.",
+    "evidence_hint": "Abstract and Fig. 1 framework",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4549,
+      "completion_tokens": 695,
+      "total_tokens": 5244
+    }
+  },
+  {
+    "id": "q_2401.10034_02",
+    "paper_id": "2401.10034",
+    "question": "According to the paper's definition in the introduction footnote, what does this survey mean by an LLM?",
+    "golden_answer": "The paper defines an LLM as a Transformer-based language model with a large number of parameters, pretrained on massive datasets using self- or semi-supervised learning techniques.",
+    "evidence_hint": "Page 1 footnote defining LLM",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4549,
+      "completion_tokens": 695,
+      "total_tokens": 5244
+    }
+  },
+  {
+    "id": "q_2401.10034_03",
+    "paper_id": "2401.10034",
+    "question": "What limitations of LLMs does the survey identify as motivations for using evolutionary algorithms, and how are EAs described as addressing them?",
+    "golden_answer": "The survey points to LLMs' black-box nature and inflexible, finite search capability. It says EAs can help because they provide a black-box optimization framework, support iterative optimization rather than one-shot search, and enable more flexible global exploration through well-designed search spaces and evolutionary operators.",
+    "evidence_hint": "Introduction discussion of black-box nature and finite search capability",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4549,
+      "completion_tokens": 695,
+      "total_tokens": 5244
+    }
+  },
+  {
+    "id": "q_2401.10034_04",
+    "paper_id": "2401.10034",
+    "question": "In the discussion of EA-based neural architecture search for LLMs, what objectives does LiteTransformerSearch optimize, on which two Transformer backbones is it evaluated, and what kind of output does it produce?",
+    "golden_answer": "LiteTransformerSearch performs multi-objective NAS optimizing perplexity, latency, and memory. It is evaluated on GPT-2 and Transformer-XL, and it produces an estimated Pareto frontier of architectures.",
+    "evidence_hint": "Page 8-9 paragraph on LiteTransformerSearch",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4549,
+      "completion_tokens": 695,
+      "total_tokens": 5244
+    }
+  },
+  {
+    "id": "q_2401.10034_05",
+    "paper_id": "2401.10034",
+    "question": "What remaining challenges and future research directions does the survey identify for EA-assisted LLM architecture search?",
+    "golden_answer": "The survey says remaining challenges include high time consumption and limited generalization ability. It suggests future work should address these issues and explore more effective LLM architecture search approaches.",
+    "evidence_hint": "Conclusion of NAS subsection on challenges",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4549,
+      "completion_tokens": 695,
+      "total_tokens": 5244
+    }
+  },
+  {
+    "id": "q_2407.12036_01",
+    "paper_id": "2407.12036",
+    "question": "What limitations of large language models does the paper highlight at the outset, and which corresponding techniques or frameworks does it propose to address them?",
+    "golden_answer": "The paper highlights three main limitations: temporal knowledge cutoffs, mathematical inaccuracies, and hallucinations or plausible but incorrect outputs. It proposes RAG to access up-to-date external information, chain-of-thought prompting to improve multi-step reasoning, PAL to use external code interpreters for precise calculations, and frameworks such as ReAct and LangChain to support structured reasoning, action planning, and complex task execution.",
+    "evidence_hint": "Introduction and abstract discussion of limitations and proposed solutions",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4181,
+      "completion_tokens": 927,
+      "total_tokens": 5108
+    }
+  },
+  {
+    "id": "q_2407.12036_02",
+    "paper_id": "2407.12036",
+    "question": "How does the paper distinguish PyTorch Distributed Data Parallel (DDP) from Fully Sharded Data Parallel (FSDP) in multi-GPU training, and under what memory condition does it say FSDP becomes necessary?",
+    "golden_answer": "DDP replicates the full model on each GPU, processes batches in parallel, and synchronizes results, but it requires all model weights, gradients, parameters, and optimizer states to fit in a single GPU's memory. FSDP shards model states across GPUs without redundancy. The paper says FSDP becomes necessary when models exceed the memory capacity of a single GPU.",
+    "evidence_hint": "Section 4.1 Scaling Model Training Across Multiple GPUs",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4181,
+      "completion_tokens": 927,
+      "total_tokens": 5108
+    }
+  },
+  {
+    "id": "q_2407.12036_03",
+    "paper_id": "2407.12036",
+    "question": "Summarize the three ZeRO optimization stages described in the paper, including the specific components sharded at each stage and the memory-reduction figures given.",
+    "golden_answer": "ZeRO Stage 1 shards only optimizer states across GPUs and reduces memory footprint by up to 4x. ZeRO Stage 2 shards optimizer states plus gradients and, together with Stage 1, can reduce memory usage by up to 8x. ZeRO Stage 3 shards all model components—parameters, gradients, and optimizer states—and with the earlier stages provides a linear reduction proportional to the number of GPUs, with the paper giving a potential reduction by a factor of 64.",
+    "evidence_hint": "Figure 5 and bullet list explaining ZeRO stages",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4181,
+      "completion_tokens": 927,
+      "total_tokens": 5108
+    }
+  },
+  {
+    "id": "q_2407.12036_04",
+    "paper_id": "2407.12036",
+    "question": "In the paper's comparative analysis of parameter-efficient fine-tuning methods, how are LoRA and prompt tuning characterized in terms of their strengths and suggested future research directions?",
+    "golden_answer": "LoRA is characterized as effective when large parameter reduction is needed without sacrificing performance, using low-rank matrix decomposition to make fine-tuning feasible on limited hardware. Prompt tuning is described as using soft prompts with very few additional parameters, being simple, scalable, and effective for large models while preserving pre-trained knowledge. The paper suggests future research on hybrid methods combining LoRA and prompt tuning, broader evaluation across architectures and domains, and adaptive PEFT methods that adjust parameter efficiency based on task complexity.",
+    "evidence_hint": "Section 5.3.3 Comparative Analysis and Further Research",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4181,
+      "completion_tokens": 927,
+      "total_tokens": 5108
+    }
+  },
+  {
+    "id": "q_2407.12036_05",
+    "paper_id": "2407.12036",
+    "question": "What limitations or risks associated with RLHF and PPO-based alignment does the paper mention, and what mechanism does it name for helping preserve model quality during updates?",
+    "golden_answer": "The paper mentions challenges such as reward hacking in RLHF and PPO-based alignment. It also notes the importance of maintaining model quality during updates, naming KL divergence as a technique used to help preserve that quality while weights are updated from human evaluations.",
+    "evidence_hint": "Introduction summary of RLHF, PPO, reward hacking, and KL divergence",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4181,
+      "completion_tokens": 927,
+      "total_tokens": 5108
+    }
+  },
+  {
+    "id": "q_2405.19266v4_01",
+    "paper_id": "2405.19266v4",
+    "question": "What are the main stages in the PediatricsGPT training pipeline, and what problem is each stage designed to address?",
+    "golden_answer": "The pipeline has four main stages: (1) Continuous Pre-Training with a hybrid instruction pre-training mechanism to reduce inconsistency between the foundation model’s internal knowledge and injected medical knowledge during domain adaptation; (2) full-parameter SFT to incorporate general medical knowledge schema; (3) human preference alignment using Direct Following Preference Optimization (DFPO) to improve robustness and pediatrician-like humanistic responses; and (4) parameter-efficient secondary SFT with a mixture of universal-specific experts strategy via LoRA to resolve the competency conflict between medical generalist ability and pediatric expertise across downstream tasks.",
+    "evidence_hint": "Abstract and introduction describing CPT, SFT, DFPO, and secondary SFT",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4569,
+      "completion_tokens": 866,
+      "total_tokens": 5435
+    }
+  },
+  {
+    "id": "q_2405.19266v4_02",
+    "paper_id": "2405.19266v4",
+    "question": "How is PedCorpus constructed, what kinds of sources does it include, and approximately how large is it?",
+    "golden_answer": "PedCorpus is a high-quality pediatric instruction dataset of over 300,000 multi-task instructions spanning single-turn and multi-turn medical conversations. It includes pediatric textbooks, pediatric guidelines, and pediatric knowledge graph resources, while also incorporating generalist healthcare data, GPT-4-distilled data, and authentic doctor-patient dialogue data to improve fluency, faithfulness, and extensibility for different training phases.",
+    "evidence_hint": "Abstract, introduction, and Table 1 dataset description",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4569,
+      "completion_tokens": 866,
+      "total_tokens": 5435
+    }
+  },
+  {
+    "id": "q_2405.19266v4_03",
+    "paper_id": "2405.19266v4",
+    "question": "Which foundation model family is used to build PediatricsGPT, and why do the authors choose it over similar contenders?",
+    "golden_answer": "PediatricsGPT is built on the Baichuan2-Base series. The authors state they chose it because it shows comprehensive potential among similar Chinese LLM contenders.",
+    "evidence_hint": "Related Work section on Chinese LLM evolution",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4569,
+      "completion_tokens": 866,
+      "total_tokens": 5435
+    }
+  },
+  {
+    "id": "q_2405.19266v4_04",
+    "paper_id": "2405.19266v4",
+    "question": "What performance claim do the authors make about PediatricsGPT in comparison with prior Chinese medical LLMs and GPT-3.5-turbo?",
+    "golden_answer": "The paper claims that PediatricsGPT consistently outperforms previous/open-source Chinese medical LLMs and baselines on pediatric and public benchmarks, and achieves competitive performance relative to GPT-3.5-turbo.",
+    "evidence_hint": "Abstract and introduction summary of experimental results",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4569,
+      "completion_tokens": 866,
+      "total_tokens": 5435
+    }
+  },
+  {
+    "id": "q_2405.19266v4_05",
+    "paper_id": "2405.19266v4",
+    "question": "What limitations or shortcomings of prior Chinese medical LLM approaches motivate this work, according to the paper?",
+    "golden_answer": "The authors highlight two main shortcomings: first, existing instruction data are inadequate for pediatrics because they often rely on generic medical rephrasing or aggregated doctor-like dialogues, lack pediatric specialization, and use simple multi-round construction that does not cover real-world multi-task healthcare needs, hurting generalization and causing hallucinations. Second, prior training procedures depend mainly on SFT, ignoring discrepancies between a model’s inherent knowledge and externally injected medical knowledge; attempts using RLHF are also limited by actor-critic instability and online sampling bias.",
+    "evidence_hint": "Introduction paragraph listing challenges (i) and (ii)",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4569,
+      "completion_tokens": 866,
+      "total_tokens": 5435
+    }
+  },
+  {
+    "id": "q_2403.07378v5_01",
+    "paper_id": "2403.07378v5",
+    "question": "What two key limitations of prior SVD-based LLM compression methods does SVD-LLM aim to solve, and what corresponding design components does it introduce to address them?",
+    "golden_answer": "SVD-LLM targets (1) the misalignment between SVD truncation and compression loss, where truncating smaller singular values can still cause high loss, and (2) the lack of model parameter updates after SVD truncation, which hurts accuracy especially at high compression ratios. It addresses these with (1) truncation-aware data whitening to create a direct mapping between singular values and compression loss, and (2) parameter update with sequential low-rank approximation, i.e., sequentially fine-tuning the decomposed low-rank matrices for global accuracy recovery.",
+    "evidence_hint": "Introduction: two fundamental issues and two key aspects of SVD-LLM",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5232,
+      "completion_tokens": 1052,
+      "total_tokens": 6284
+    }
+  },
+  {
+    "id": "q_2403.07378v5_02",
+    "paper_id": "2403.07378v5",
+    "question": "How is the weight compression ratio defined for compressing a weight matrix W ∈ R^{d×n} into two low-rank matrices in SVD-LLM, and what does the paper conclude about compute complexity reduction as a function of that compression ratio?",
+    "golden_answer": "If W ∈ R^{d×n} is compressed into W'u ∈ R^{d×r} and W'v ∈ R^{r×n}, the weight compression ratio is Rw = 1 - ((d+n)r)/(dn). The paper concludes that inference compute complexity is reduced to 1 - Rw times the original. For example, at Rw = 50%, compute complexity is reduced by 50%, from O(d^2 n) to O(d^2 r + rnd).",
+    "evidence_hint": "Section 4.2 theoretical analysis; Equation (1) and compute complexity discussion",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5232,
+      "completion_tokens": 1052,
+      "total_tokens": 6284
+    }
+  },
+  {
+    "id": "q_2403.07378v5_03",
+    "paper_id": "2403.07378v5",
+    "question": "What experimental coverage does the paper use to demonstrate the generality of SVD-LLM in terms of datasets, model families, and model scales?",
+    "golden_answer": "The paper evaluates on 10 datasets and seven models from three LLM families—LLaMA, OPT, and Mistral—across three scales: 7B, 13B, and 30B.",
+    "evidence_hint": "Abstract and introduction summary of evaluation setup",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5232,
+      "completion_tokens": 1052,
+      "total_tokens": 6284
+    }
+  },
+  {
+    "id": "q_2403.07378v5_04",
+    "paper_id": "2403.07378v5",
+    "question": "In the ablation comparing fine-tuning strategies on WikiText-2 for compressing LLaMA-7B, what perplexity does SVD-LLM with sequential LoRA fine-tuning achieve at 80% compression ratio, and how does it compare to SVD-LLM with normal LoRA fine-tuning and ASVD with sequential LoRA fine-tuning?",
+    "golden_answer": "At 80% compression ratio, SVD-LLM with sequential LoRA fine-tuning (SVD-LLM (SFT)) achieves perplexity 31.79. This is better than SVD-LLM with normal LoRA fine-tuning (SVD-LLM (NFT)) at 80.23 and ASVD with sequential LoRA fine-tuning (ASVD (SFT)) at 271.",
+    "evidence_hint": "Appendix Table 15: WikiText-2 perplexity under different compression ratios",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5232,
+      "completion_tokens": 1052,
+      "total_tokens": 6284
+    }
+  },
+  {
+    "id": "q_2403.07378v5_05",
+    "paper_id": "2403.07378v5",
+    "question": "What three limitations of SVD-LLM do the authors explicitly identify for future work?",
+    "golden_answer": "The authors list three limitations: (1) compression accuracy still degrades, especially at high compression ratios, and should ideally become comparable to standalone quantization methods; (2) latency needs optimization when SVD-LLM is used to compress the KV cache because reconstructing original key/value states adds computation and hurts inference speed; and (3) compressed models can still produce low-quality generation such as repeated words, so SVD-LLM needs better guidance for high-quality generation.",
+    "evidence_hint": "Appendix A.11 Limitations",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5232,
+      "completion_tokens": 1052,
+      "total_tokens": 6284
+    }
+  },
+  {
+    "id": "q_2502.18036v5_01",
+    "paper_id": "2502.18036v5",
+    "question": "How does the survey define the three broad categories of LLM Ensemble, and what is the key distinction in when the ensemble operation occurs for each category?",
+    "golden_answer": "The survey defines: (1) ensemble-before-inference, which routes a query to the most suitable model before generation; (2) ensemble-during-inference, which combines partial outputs such as token-, span-, or process-level information during decoding and feeds the aggregated text back to the models; and (3) ensemble-after-inference, which ensembles complete responses after models have already generated them.",
+    "evidence_hint": "Section 2.1 LLM Ensemble Taxonomy; Figure 1 overview",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4949,
+      "completion_tokens": 847,
+      "total_tokens": 5796
+    }
+  },
+  {
+    "id": "q_2502.18036v5_02",
+    "paper_id": "2502.18036v5",
+    "question": "Within ensemble-during-inference, what are the three finer-grained method types identified by the survey, and how is each granularity characterized?",
+    "golden_answer": "The three types are: (b1) token-level ensemble, which integrates token-level outputs at the finest decoding granularity; (b2) span-level ensemble, which ensembles sequence fragments such as a span of words; and (b3) process-level ensemble, which selects the optimal reasoning process step-by-step within a reasoning chain for complex reasoning tasks.",
+    "evidence_hint": "Section 2.1, paragraph on ensemble-during-inference",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4949,
+      "completion_tokens": 847,
+      "total_tokens": 5796
+    }
+  },
+  {
+    "id": "q_2502.18036v5_03",
+    "paper_id": "2502.18036v5",
+    "question": "According to Table 2, which ensemble-during-inference method uses reinforcement learning for token-level routing, and what efficiency-related property and model-count setting are reported for it?",
+    "golden_answer": "CITER uses reinforcement learning for token-level routing. It is marked as efficiency-aware, and its model-count setting is exactly 2 models (= 2).",
+    "evidence_hint": "Table 2 row for CITER [Zheng et al., 2025]",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4949,
+      "completion_tokens": 847,
+      "total_tokens": 5796
+    }
+  },
+  {
+    "id": "q_2502.18036v5_04",
+    "paper_id": "2502.18036v5",
+    "question": "What common pipeline do existing span-level ensemble-during-inference methods follow, and what criteria are mentioned for assessing or selecting spans?",
+    "golden_answer": "They follow a generation-assessment-selection pipeline. Multiple models first generate word-containing fragments, then the fragments are assessed using perplexity, with examples also noting criteria such as common words or fixed-length spans for selection.",
+    "evidence_hint": "Section 3.2.2 and Table 2 rows for Cool-Fusion, SweetSpan, SpecFuse",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4949,
+      "completion_tokens": 847,
+      "total_tokens": 5796
+    }
+  },
+  {
+    "id": "q_2502.18036v5_05",
+    "paper_id": "2502.18036v5",
+    "question": "What two future-direction limitations does the survey highlight for span-level ensemble-during-inference and non-cascade ensemble-after-inference methods?",
+    "golden_answer": "For span-level ensemble-during-inference, the survey says current segmentation is too simplistic, such as rigid fixed-length segments like 4-word spans, and calls for more principled segmentation. For non-cascade ensemble-after-inference, it says current methods often rely on simplistic pairwise similarity between outputs or require extra supervised generation-oriented components, which hurts generalization.",
+    "evidence_hint": "Section 5.2 Existing Limitations and Future Directions",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 4949,
+      "completion_tokens": 847,
+      "total_tokens": 5796
+    }
+  },
+  {
+    "id": "q_2503.12340_01",
+    "paper_id": "2503.12340",
+    "question": "What two main limitations of the original SVD-LLM does SVD-LLM V2 aim to address, and what corresponding techniques does V2 introduce to overcome them?",
+    "golden_answer": "SVD-LLM has two stated limitations: it uses a homogeneous compression ratio for all weight matrices, ignoring layer-wise redundancy heterogeneity, and it uses Cholesky decomposition for truncation, which is hard to satisfy in practice due to the positive-definite requirement and causes numerical instability. SVD-LLM V2 addresses these with (1) heterogeneous compression ratio allocation based on the theoretical truncation loss of each weight matrix and (2) loss-optimized weight truncation that replaces Cholesky with two rounds of SVD to achieve lower, more stable truncation loss.",
+    "evidence_hint": "Introduction pages 1-2 describing SVD-LLM limitations and SVD-LLM V2 contributions",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5838,
+      "completion_tokens": 1029,
+      "total_tokens": 6867
+    }
+  },
+  {
+    "id": "q_2503.12340_02",
+    "paper_id": "2503.12340",
+    "question": "According to Theorem 3.1, how is the compressed weight matrix W' constructed in SVD-LLM V2, and what theoretical property does this construction guarantee?",
+    "golden_answer": "Theorem 3.1 states that if Us, Ss, Vs come from the SVD of XX^T and Uws, Sws, Vws come from the SVD of W × Us × sqrt(Ss), then the compressed weight matrix is W' = Uws × Trunc.(Sws) × Vws × sqrt(Ss)^(-1) × Us^(-1). This construction guarantees the theoretical minimum truncation loss.",
+    "evidence_hint": "Theorem 3.1 and proof on page 3",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5838,
+      "completion_tokens": 1029,
+      "total_tokens": 6867
+    }
+  },
+  {
+    "id": "q_2503.12340_03",
+    "paper_id": "2503.12340",
+    "question": "What models and dataset categories are used in the experimental setup, and how many datasets are included in each category?",
+    "golden_answer": "The experiments use five models: LLaMA-7B, LLaMA-13B, LLaMA-30B, LLaMA3-8B, and OPT-6.7B. They evaluate on ten datasets in three categories: two language modeling datasets (WikiText-2 and C4), six classification datasets (OpenbookQA, WinoGrande, HellaSwag, Arc_e, PIQA, MathQA), and two generation datasets (TruthfulQA and GSM8K).",
+    "evidence_hint": "Experiments section 'Models and Datasets'",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5838,
+      "completion_tokens": 1029,
+      "total_tokens": 6867
+    }
+  },
+  {
+    "id": "q_2503.12340_04",
+    "paper_id": "2503.12340",
+    "question": "Under a 7 GB weight memory budget, how does SVD-LLM V2 compare with structured pruning methods on LLaMA-7B in terms of perplexity and average accuracy, including the reported numeric improvements?",
+    "golden_answer": "At 7 GB on LLaMA-7B, SVD-LLM V2 achieves perplexity 15.62 and average accuracy 0.35. The paper reports this as a 28% reduction in perplexity and a 13% increase in average accuracy compared with the structured pruning baselines under the same budget.",
+    "evidence_hint": "Table 5, Table 6, and paragraph 'Comparison with Structured Pruning'",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5838,
+      "completion_tokens": 1029,
+      "total_tokens": 6867
+    }
+  },
+  {
+    "id": "q_2503.12340_05",
+    "paper_id": "2503.12340",
+    "question": "What do the ablation and calibration-set analyses conclude about the roles of SVD-LLM V2's two components and the method's sensitivity to calibration data?",
+    "golden_answer": "The ablation shows that each component alone is effective: both the allocation-only variant and truncation-only variant outperform the original SVD-LLM, while full SVD-LLM V2 outperforms both single-component variants, indicating both components are necessary. The calibration-set analysis shows low sensitivity: varying the number of calibration samples and sampling seeds causes no more than 1% fluctuation in final performance for LLaMA-7B at 20% compression on WikiText-2.",
+    "evidence_hint": "Ablation discussion and 'Impact of Calibration Set' paragraph",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5838,
+      "completion_tokens": 1029,
+      "total_tokens": 6867
+    }
+  },
+  {
+    "id": "q_2306.08568_01",
+    "paper_id": "2306.08568",
+    "question": "What are the two main steps used to build WizardCoder from Code Evol-Instruct, and which base datasets/models are involved in those steps?",
+    "golden_answer": "First, the authors apply Code Evol-Instruct to evolve basic code instruction data, specifically Code Alpaca, into a more complex code instruction-following dataset. Second, they fine-tune open-source code LLMs, specifically StarCoder and CodeLlama, on this newly generated dataset to produce the WizardCoder models.",
+    "evidence_hint": "method overview describing two-step pipeline with Code Alpaca, StarCoder, and CodeLlama",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5386,
+      "completion_tokens": 784,
+      "total_tokens": 6170
+    }
+  },
+  {
+    "id": "q_2306.08568_02",
+    "paper_id": "2306.08568",
+    "question": "Which coding-domain-specific techniques are added in Code Evol-Instruct beyond adapting Evol-Instruct, according to the paper's description of the method?",
+    "golden_answer": "The paper says Code Evol-Instruct adds several coding-specific methods: heuristics tailored to coding task features, adversarial sample heuristics, time/space complexity requirements, and evolving stop controls.",
+    "evidence_hint": "paragraph introducing Code Evol-Instruct's novel methods",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5386,
+      "completion_tokens": 784,
+      "total_tokens": 6170
+    }
+  },
+  {
+    "id": "q_2306.08568_03",
+    "paper_id": "2306.08568",
+    "question": "On the MultiPL-E benchmark, what pass@1 score does WizardCoder 34B achieve for JavaScript, and how does it compare to CodeLlama-Instruct 34B on the same language?",
+    "golden_answer": "WizardCoder 34B achieves 55.3 pass@1 on JavaScript, compared with 45.9 for CodeLlama-Instruct 34B, a gain of 9.4 points.",
+    "evidence_hint": "Table 2 MultiPL-E results, JavaScript column",
+    "difficulty": "easy",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5386,
+      "completion_tokens": 784,
+      "total_tokens": 6170
+    }
+  },
+  {
+    "id": "q_2306.08568_04",
+    "paper_id": "2306.08568",
+    "question": "How is DS-1000 evaluated in this paper, including the supported modes, what the authors report, and the generation hyperparameters used for that benchmark?",
+    "golden_answer": "DS-1000 supports two evaluation modes: completion and insertion. In this paper, the authors report insertion scores for models that support insertion. The benchmark uses pass@1 accuracy averaged over 40 samples, with temperature 0.2, top-p 0.5, and max length 1024.",
+    "evidence_hint": "DS-1000 section and Table 3 caption/header",
+    "difficulty": "medium",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5386,
+      "completion_tokens": 784,
+      "total_tokens": 6170
+    }
+  },
+  {
+    "id": "q_2306.08568_05",
+    "paper_id": "2306.08568",
+    "question": "What limitation did the authors find when using an open-source model for evolution execution in Appendix E, and what workaround did they adopt?",
+    "golden_answer": "They found that the open-source CodeLlama-Instruct-34B model had relatively low coding performance for response generation when used to generate evolved instructions. As a workaround, they fine-tuned that model on their code-alpaca dataset and then used the fine-tuned version for response generation.",
+    "evidence_hint": "Appendix E: using different evolution execution models",
+    "difficulty": "hard",
+    "question_model": "openai/gpt-5.4",
+    "generation_usage": {
+      "prompt_tokens": 5386,
+      "completion_tokens": 784,
+      "total_tokens": 6170
+    }
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "rows": [
+    {
+      "system": "bare_gpt4o_mini",
+      "n": 50,
+      "accuracy": 0.06,
+      "recall": 0.04,
+      "faithfulness": 4.94,
+      "completeness": 0.08,
+      "specificity": 0.04,
+      "overall": 1.02,
+      "time_efficiency": 4.989,
+      "avg_latency_seconds": 1.245,
+      "p95_latency_seconds": 1.976,
+      "avg_context_chars": 0
+    },
+    {
+      "system": "papermem",
+      "n": 50,
+      "accuracy": 1.18,
+      "recall": 1.16,
+      "faithfulness": 1.64,
+      "completeness": 1.4,
+      "specificity": 1.82,
+      "overall": 1.44,
+      "time_efficiency": 0.859,
+      "avg_latency_seconds": 7.485,
+      "p95_latency_seconds": 10.555,
+      "avg_context_chars": 6813.3
+    },
+    {
+      "system": "rag_gpt4o_mini",
+      "n": 50,
+      "accuracy": 4.02,
+      "recall": 4.2,
+      "faithfulness": 3.62,
+      "completeness": 4.26,
+      "specificity": 4.32,
+      "overall": 4.104,
+      "time_efficiency": 2.068,
+      "avg_latency_seconds": 3.391,
+      "p95_latency_seconds": 5.878,
+      "avg_context_chars": 13997.0
+    }
+  ]
+}

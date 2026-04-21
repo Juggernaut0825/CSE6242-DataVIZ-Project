@@ -43,8 +43,12 @@ electron/api-base.json
 
 # PDFs
 *.pdf
+!eval_paper2/pdfs/*.pdf
 demo.gif
 papermem-demo/
+
+# Local evaluation state
+llm_as_judge/results/papermem_project.json
 
 # Logs
 *.log

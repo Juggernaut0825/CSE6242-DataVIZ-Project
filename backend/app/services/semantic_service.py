@@ -87,7 +87,7 @@ class SemanticService:
                     enable_reasoning=False,
                     response_format={"type": "json_object"},
                 ),
-                timeout=12.0,
+                timeout=settings.semantic_llm_timeout_seconds,
             )
             content = self._response_text(response)
             if not content:

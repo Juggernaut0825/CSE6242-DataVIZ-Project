@@ -1,0 +1,220 @@
+[
+  {
+    "paper_id": "2402.11651",
+    "title": "Learning From Failure: Integrating Negative Examples when Fine-tuning Large Language Models as Agents",
+    "authors": [
+      "Renxi Wang",
+      "Haonan Li",
+      "Xudong Han",
+      "Yixuan Zhang",
+      "Timothy Baldwin"
+    ],
+    "abstract": "Large language models (LLMs) have achieved success in acting as agents, which interact with environments through tools such as search engines. However, LLMs are optimized for language generation instead of tool use during training or alignment, limiting their effectiveness as agents. To resolve this problem, previous work has first collected interaction trajectories between LLMs and environments, using only trajectories that successfully finished the task to fine-tune smaller models, making fine-tuning data scarce and acquiring it both difficult and costly. Discarding failed trajectories also leads to significant wastage of data and resources and limits the possible optimization paths during fine-tuning. In this paper, we argue that unsuccessful trajectories offer valuable insights, and LLMs can learn from these trajectories through appropriate quality control and fine-tuning strategies. By simply adding a prefix or suffix that tells the model whether to generate a successful trajectory during training, we improve model performance by a large margin on mathematical reasoning, multi-hop question answering, and strategic question answering tasks. We further analyze the inference results and find that our method provides a better trade-off between valuable information and errors in unsuccessful trajectories. To our knowledge, we are the first to demonstrate the value of negative trajectories and their application in agent-tunning scenarios. Our findings offer guidance for developing better agent-tuning methods and low-resource data usage techniques.",
+    "published": "2024-02-18T17:10:07Z",
+    "updated": "2024-04-16T11:41:13Z",
+    "pdf_url": "https://arxiv.org/pdf/2402.11651v2",
+    "abs_url": "https://arxiv.org/abs/2402.11651v2",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2402.11651.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2402.11651.txt",
+    "page_count": 13,
+    "text_chars": 51681
+  },
+  {
+    "paper_id": "2310.00034",
+    "title": "PB-LLM: Partially Binarized Large Language Models",
+    "authors": [
+      "Yuzhang Shang",
+      "Zhihang Yuan",
+      "Qiang Wu",
+      "Zhen Dong"
+    ],
+    "abstract": "This paper explores network binarization, a radical form of quantization, compressing model weights to a single bit, specifically for Large Language Models (LLMs) compression. Due to previous binarization methods collapsing LLMs, we propose a novel approach, Partially-Binarized LLM (PB-LLM), which can achieve extreme low-bit quantization while maintaining the linguistic reasoning capacity of quantized LLMs. Specifically, our exploration first uncovers the ineffectiveness of naive applications of existing binarization algorithms and highlights the imperative role of salient weights in achieving low-bit quantization. Thus, PB-LLM filters a small ratio of salient weights during binarization, allocating them to higher-bit storage, i.e., partially-binarization. PB-LLM is extended to recover the capacities of quantized LMMs, by analyzing from the perspective of post-training quantization (PTQ) and quantization-aware training (QAT). Under PTQ, combining the concepts from GPTQ, we reconstruct the binarized weight matrix guided by the Hessian matrix and successfully recover the reasoning capacity of PB-LLM in low-bit. Under QAT, we freeze the salient weights during training, explore the derivation of optimal scaling factors crucial for minimizing the quantization error, and propose a scaling mechanism based on this derived scaling strategy for residual binarized weights. Those explorations and the developed methodologies significantly contribute to rejuvenating the performance of low-bit quantized LLMs and present substantial advancements in the field of network binarization for LLMs.The code is available at https://github.com/hahnyuan/BinaryLLM.",
+    "published": "2023-09-29T14:35:27Z",
+    "updated": "2023-11-07T20:41:22Z",
+    "pdf_url": "https://arxiv.org/pdf/2310.00034v2",
+    "abs_url": "https://arxiv.org/abs/2310.00034v2",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2310.00034.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2310.00034.txt",
+    "page_count": 13,
+    "text_chars": 51675
+  },
+  {
+    "paper_id": "2312.10793",
+    "title": "Demystifying Instruction Mixing for Fine-tuning Large Language Models",
+    "authors": [
+      "Renxi Wang",
+      "Haonan Li",
+      "Minghao Wu",
+      "Yuxia Wang",
+      "Xudong Han",
+      "Chiyu Zhang",
+      "Timothy Baldwin"
+    ],
+    "abstract": "Instruction tuning significantly enhances the performance of large language models (LLMs) across various tasks. However, the procedure to optimizing the mixing of instruction datasets for LLM fine-tuning is still poorly understood. This study categorizes instructions into three primary types: NLP downstream tasks, coding, and general chat. We explore the effects of instruction tuning on different combinations of datasets on LLM performance, and find that certain instruction types are more advantageous for specific applications but can negatively impact other areas. This work provides insights into instruction mixtures, laying the foundations for future research.",
+    "published": "2023-12-17T18:44:26Z",
+    "updated": "2024-02-18T17:13:36Z",
+    "pdf_url": "https://arxiv.org/pdf/2312.10793v3",
+    "abs_url": "https://arxiv.org/abs/2312.10793v3",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2312.10793.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2312.10793.txt",
+    "page_count": 8,
+    "text_chars": 32152
+  },
+  {
+    "paper_id": "2401.10034",
+    "title": "Evolutionary Computation in the Era of Large Language Model: Survey and Roadmap",
+    "authors": [
+      "Xingyu Wu",
+      "Sheng-hao Wu",
+      "Jibin Wu",
+      "Liang Feng",
+      "Kay Chen Tan"
+    ],
+    "abstract": "Large language models (LLMs) have not only revolutionized natural language processing but also extended their prowess to various domains, marking a significant stride towards artificial general intelligence. The interplay between LLMs and evolutionary algorithms (EAs), despite differing in objectives and methodologies, share a common pursuit of applicability in complex problems. Meanwhile, EA can provide an optimization framework for LLM's further enhancement under black-box settings, empowering LLM with flexible global search capacities. On the other hand, the abundant domain knowledge inherent in LLMs could enable EA to conduct more intelligent searches. Furthermore, the text processing and generative capabilities of LLMs would aid in deploying EAs across a wide range of tasks. Based on these complementary advantages, this paper provides a thorough review and a forward-looking roadmap, categorizing the reciprocal inspiration into two main avenues: LLM-enhanced EA and EA-enhanced LLM. Some integrated synergy methods are further introduced to exemplify the complementarity between LLMs and EAs in diverse scenarios, including code generation, software engineering, neural architecture search, and various generation tasks. As the first comprehensive review focused on the EA research in the era of LLMs, this paper provides a foundational stepping stone for understanding the collaborative potential of LLMs and EAs. The identified challenges and future directions offer guidance for researchers and practitioners to unlock the full potential of this innovative collaboration in propelling advancements in optimization and artificial intelligence. We have created a GitHub repository to index the relevant papers: https://github.com/wuxingyu-ai/LLM4EC.",
+    "published": "2024-01-18T14:58:17Z",
+    "updated": "2024-05-29T09:00:25Z",
+    "pdf_url": "https://arxiv.org/pdf/2401.10034v3",
+    "abs_url": "https://arxiv.org/abs/2401.10034v3",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2401.10034.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2401.10034.txt",
+    "page_count": 21,
+    "text_chars": 137482
+  },
+  {
+    "paper_id": "2407.12036",
+    "title": "Exploring Advanced Large Language Models with LLMsuite",
+    "authors": [
+      "Giorgio Roffo"
+    ],
+    "abstract": "This tutorial explores the advancements and challenges in the development of Large Language Models (LLMs) such as ChatGPT and Gemini. It addresses inherent limitations like temporal knowledge cutoffs, mathematical inaccuracies, and the generation of incorrect information, proposing solutions like Retrieval Augmented Generation (RAG), Program-Aided Language Models (PAL), and frameworks such as ReAct and LangChain. The integration of these techniques enhances LLM performance and reliability, especially in multi-step reasoning and complex task execution. The paper also covers fine-tuning strategies, including instruction fine-tuning, parameter-efficient methods like LoRA, and Reinforcement Learning from Human Feedback (RLHF) as well as Reinforced Self-Training (ReST). Additionally, it provides a comprehensive survey of transformer architectures and training techniques for LLMs. The source code can be accessed by contacting the author via email for a request.",
+    "published": "2024-07-01T05:37:17Z",
+    "updated": "2024-11-12T10:12:49Z",
+    "pdf_url": "https://arxiv.org/pdf/2407.12036v2",
+    "abs_url": "https://arxiv.org/abs/2407.12036v2",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2407.12036.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2407.12036.txt",
+    "page_count": 17,
+    "text_chars": 76588
+  },
+  {
+    "paper_id": "2405.19266v4",
+    "title": "PediatricsGPT: Large Language Models as Chinese Medical Assistants for Pediatric Applications",
+    "authors": [
+      "Dingkang Yang",
+      "Jinjie Wei",
+      "Dongling Xiao",
+      "Shunli Wang",
+      "Tong Wu",
+      "Gang Li",
+      "Mingcheng Li",
+      "Shuaibing Wang",
+      "Jiawei Chen",
+      "Yue Jiang",
+      "Qingyao Xu",
+      "Ke Li",
+      "Peng Zhai",
+      "Lihua Zhang"
+    ],
+    "abstract": "Developing intelligent pediatric consultation systems offers promising prospects for improving diagnostic efficiency, especially in China, where healthcare resources are scarce. Despite recent advances in Large Language Models (LLMs) for Chinese medicine, their performance is sub-optimal in pediatric applications due to inadequate instruction data and vulnerable training procedures. To address the above issues, this paper builds PedCorpus, a high-quality dataset of over 300,000 multi-task instructions from pediatric textbooks, guidelines, and knowledge graph resources to fulfil diverse diagnostic demands. Upon well-designed PedCorpus, we propose PediatricsGPT, the first Chinese pediatric LLM assistant built on a systematic and robust training pipeline. In the continuous pre-training phase, we introduce a hybrid instruction pre-training mechanism to mitigate the internal-injected knowledge inconsistency of LLMs for medical domain adaptation. Immediately, the full-parameter Supervised Fine-Tuning (SFT) is utilized to incorporate the general medical knowledge schema into the models. After that, we devise a direct following preference optimization to enhance the generation of pediatrician-like humanistic responses. In the parameter-efficient secondary SFT phase, a mixture of universal-specific experts strategy is presented to resolve the competency conflict between medical generalist and pediatric expertise mastery. Extensive results based on the metrics, GPT-4, and doctor evaluations on distinct doctor downstream tasks show that PediatricsGPT consistently outperforms previous Chinese medical LLMs. Our model and dataset will be open-source for community development.",
+    "published": "2024-05-29T16:59:38Z",
+    "updated": "2024-11-11T14:36:35Z",
+    "pdf_url": "https://arxiv.org/pdf/2405.19266v4",
+    "abs_url": "https://arxiv.org/abs/2405.19266v4",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2405.19266v4.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2405.19266v4.txt",
+    "page_count": 31,
+    "text_chars": 125052
+  },
+  {
+    "paper_id": "2403.07378v5",
+    "title": "SVD-LLM: Truncation-aware Singular Value Decomposition for Large Language Model Compression",
+    "authors": [
+      "Xin Wang",
+      "Yu Zheng",
+      "Zhongwei Wan",
+      "Mi Zhang"
+    ],
+    "abstract": "The advancements in Large Language Models (LLMs) have been hindered by their substantial sizes, which necessitates LLM compression methods for practical deployment. Singular Value Decomposition (SVD) offers a promising solution for LLM compression. However, state-of-the-art SVD-based LLM compression methods have two key limitations: truncating smaller singular values may lead to higher compression loss, and the lack of update on the compressed weights after SVD truncation. In this work, we propose SVD-LLM, a SVD-based post-training LLM compression method that addresses the limitations of existing methods. SVD-LLM incorporates a truncation-aware data whitening technique to ensure a direct mapping between singular values and compression loss. Moreover, SVD-LLM adopts a parameter update with sequential low-rank approximation to compensate for the accuracy degradation after SVD compression. We evaluate SVD-LLM on 10 datasets and seven models from three different LLM families at three different scales. Our results demonstrate the superiority of SVD-LLM over state-of-the-arts, especially at high model compression ratios. Our code is available at https://github.com/AIoT-MLSys-Lab/SVD-LLM",
+    "published": "2024-03-12T07:31:18Z",
+    "updated": "2025-03-16T03:27:33Z",
+    "pdf_url": "https://arxiv.org/pdf/2403.07378v5",
+    "abs_url": "https://arxiv.org/abs/2403.07378v5",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2403.07378v5.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2403.07378v5.txt",
+    "page_count": 21,
+    "text_chars": 75767
+  },
+  {
+    "paper_id": "2502.18036v5",
+    "title": "Harnessing Multiple Large Language Models: A Survey on LLM Ensemble",
+    "authors": [
+      "Zhijun Chen",
+      "Jingzheng Li",
+      "Pengpeng Chen",
+      "Zhuoran Li",
+      "Kai Sun",
+      "Yuankai Luo",
+      "Qianren Mao",
+      "Ming Li",
+      "Likang Xiao",
+      "Dingqi Yang",
+      "Yikun Ban",
+      "Hailong Sun",
+      "Philip S. Yu"
+    ],
+    "abstract": "LLM Ensemble -- which involves the comprehensive use of multiple large language models (LLMs), each aimed at handling user queries during downstream inference, to benefit from their individual strengths -- has gained substantial attention recently. The widespread availability of LLMs, coupled with their varying strengths and out-of-the-box usability, has profoundly advanced the field of LLM Ensemble. This paper presents the first systematic review of recent developments in LLM Ensemble. First, we introduce our taxonomy of LLM Ensemble and discuss several related research problems. Then, we provide a more in-depth classification of the methods under the broad categories of \"ensemble-before-inference, ensemble-during-inference, ensemble-after-inference'', and review all relevant methods. Finally, we introduce related benchmarks and applications, summarize existing studies, and suggest several future research directions. A curated list of papers on LLM Ensemble is available at https://github.com/junchenzhi/Awesome-LLM-Ensemble.",
+    "published": "2025-02-25T09:48:53Z",
+    "updated": "2025-09-18T20:23:29Z",
+    "pdf_url": "https://arxiv.org/pdf/2502.18036v5",
+    "abs_url": "https://arxiv.org/abs/2502.18036v5",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2502.18036v5.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2502.18036v5.txt",
+    "page_count": 10,
+    "text_chars": 57577
+  },
+  {
+    "paper_id": "2503.12340",
+    "title": "SVD-LLM V2: Optimizing Singular Value Truncation for Large Language Model Compression",
+    "authors": [
+      "Xin Wang",
+      "Samiul Alam",
+      "Zhongwei Wan",
+      "Hui Shen",
+      "Mi Zhang"
+    ],
+    "abstract": "Despite significant advancements, the practical deployment of Large Language Models (LLMs) is often hampered by their immense sizes, highlighting the need for effective compression techniques. Singular Value Decomposition (SVD) is a promising LLM compression technique. However, existing SVD-based compression methods fall short in reducing truncation losses, leading to less competitive performance in compressed models. In this work, we introduce SVD-LLM V2, a SVD-based LLM compression method that optimizes singular value truncation in SVD compression with two techniques. First, SVD-LLM V2 proposes to use theoretical truncation loss of weight matrices to assign a unique compression ratio to each weight matrix at different layers to accommodate weight redundancy heterogeneity. Second, SVD-LLM V2 proposes loss-optimized weight truncation to ensure that the truncated singular values result in a lower and more stable truncation loss in practice. We evaluate SVD-LLM V2 on ten datasets and five LLMs at various scales. Our results show SVD-LLM V2 outperforms state-of-the-art SVD-based LLM compression methods. Our code is available at https://github.com/AIoT-MLSys-Lab/SVD-LLM",
+    "published": "2025-03-16T03:27:12Z",
+    "updated": "2025-03-16T03:27:12Z",
+    "pdf_url": "https://arxiv.org/pdf/2503.12340v1",
+    "abs_url": "https://arxiv.org/abs/2503.12340v1",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2503.12340.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2503.12340.txt",
+    "page_count": 10,
+    "text_chars": 43399
+  },
+  {
+    "paper_id": "2306.08568",
+    "title": "WizardCoder: Empowering Code Large Language Models with Evol-Instruct",
+    "authors": [
+      "Ziyang Luo",
+      "Can Xu",
+      "Pu Zhao",
+      "Qingfeng Sun",
+      "Xiubo Geng",
+      "Wenxiang Hu",
+      "Chongyang Tao",
+      "Jing Ma",
+      "Qingwei Lin",
+      "Daxin Jiang"
+    ],
+    "abstract": "Code Large Language Models (Code LLMs), such as StarCoder, have demonstrated exceptional performance in code-related tasks. However, most existing models are solely pre-trained on extensive raw code data without instruction fine-tuning. In this paper, we introduce WizardCoder, which empowers Code LLMs with complex instruction fine-tuning, by adapting the Evol-Instruct method to the domain of code. Through comprehensive experiments on four prominent code generation benchmarks, namely HumanEval, HumanEval+, MBPP, and DS-1000, we unveil the exceptional capabilities of our model. It surpasses all other open-source Code LLMs by a substantial margin. Moreover, our model even outperforms the largest closed LLMs, Anthropic's Claude and Google's Bard, on HumanEval and HumanEval+. Our code, model weights, and data are public at https://github.com/nlpxucan/WizardLM",
+    "published": "2023-06-14T15:18:48Z",
+    "updated": "2025-05-27T07:40:36Z",
+    "pdf_url": "https://arxiv.org/pdf/2306.08568v2",
+    "abs_url": "https://arxiv.org/abs/2306.08568v2",
+    "pdf_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/pdfs/2306.08568.pdf",
+    "text_path": "/Users/zijianwang/Desktop/GT/SPRING26/CSE6242_DataVIZ/Project/eval_paper2/texts/2306.08568.txt",
+    "page_count": 18,
+    "text_chars": 64136
+  }
+]

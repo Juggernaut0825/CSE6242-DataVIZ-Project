@@ -22,12 +22,16 @@ class EmbeddingService:
         cleaned = [text.strip() or "(empty)" for text in texts]
         if self.client:
             try:
-                response = await self.client.embeddings.create(
-                    model=settings.embedding_model,
-                    input=cleaned,
-                    dimensions=self.dimensions,
-                )
-                return [self._normalize_embedding(item.embedding) for item in response.data]
+                embeddings: List[List[float]] = []
+                batch_size = max(1, settings.embedding_batch_size)
+                for start in range(0, len(cleaned), batch_size):
+                    response = await self.client.embeddings.create(
+                        model=settings.embedding_model,
+                        input=cleaned[start : start + batch_size],
+                        dimensions=self.dimensions,
+                    )
+                    embeddings.extend(self._normalize_embedding(item.embedding) for item in response.data)
+                return embeddings
             except Exception:
                 pass
         return [self._fallback_embed(text) for text in cleaned]

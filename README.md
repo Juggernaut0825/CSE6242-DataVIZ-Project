@@ -245,9 +245,10 @@ The current memory pipeline is intentionally lighter than the original GauzRag p
 2. sanitize text
 3. chunk text
 4. embed chunks
-5. extract semantic bundles
-6. store memory units in `Postgres`
-7. write semantic nodes and relations to `Neo4j`
+5. select a deterministic subset of chunks for LLM semantic labeling
+6. extract semantic bundles with either LLM labels or local fallback labels
+7. store memory units in `Postgres`
+8. write semantic nodes and relations to `Neo4j`
 
 ### Retrieval Pipeline
 
@@ -270,7 +271,28 @@ The semantic extraction stage produces:
 - relation candidates
 - `display_label` values for graph-friendly rendering
 
-The preferred behavior is prompt-driven. The LLM is asked to produce concise, mind-map-style labels directly during extraction instead of relying purely on post-processing heuristics in code.
+PaperMem uses a hybrid semantic-labeling strategy so ingestion remains practical for long papers, reports, notes, contracts, and deployed environments.
+
+Every uploaded file chunk becomes a `MemoryUnit`, receives an embedding, is stored in `Postgres`, and is written into the `Neo4j` graph. The system does **not** drop unsampled chunks from graph retrieval. Instead, chunks differ only in how their semantic labels are produced:
+
+- roughly one third of file chunks receive higher-quality LLM semantic labels
+- the remaining chunks receive fast local fallback labels
+- all chunks still participate in vector retrieval, graph rendering, graph expansion, and evidence selection
+
+The LLM-labeled subset is selected with deterministic MMR-style sampling rather than pure randomness or a paper-specific section heuristic. PaperMem first keeps the first and last chunk, then scores candidate chunks using local salience signals such as length, numeric values, acronyms, named entities, heading-like text, and words such as summary, result, method, limitation, risk, requirement, decision, experiment, and evaluation. It then uses chunk embeddings to prefer candidates that cover different topics from chunks already selected. A small position-spread term prevents the selected chunks from collapsing into one nearby part of the document when embeddings are similar.
+
+This is useful because user uploads are not always papers. A position-only strategy assumes structures like intro, method, results, and conclusion, which can fail for meeting notes, product specs, legal documents, or mixed research material. The MMR strategy instead tries to spend LLM calls on chunks that are both information-dense and semantically diverse, while local fallback keeps the rest of the graph complete.
+
+The local fallback path is rule-based and runs without remote LLM calls. It splits text into candidate claims, extracts entities from uppercase/title-like spans, extracts concepts from frequent non-stopword tokens, looks for relation cues such as because, therefore, however, and for example, and creates compact display labels. These labels are rougher than LLM labels but are fast enough to apply to every chunk.
+
+The main controls are:
+
+- `SEMANTIC_LLM_FILE_SAMPLE_RATIO`, default `0.34`, controls the target fraction of file chunks that receive LLM labels
+- `SEMANTIC_LLM_FILE_SAMPLE_MIN`, default `8`, keeps small files from being under-labeled
+- `SEMANTIC_LLM_FILE_SAMPLE_MAX`, default `0`, means no maximum cap
+- `SEMANTIC_LLM_SELECTION_STRATEGY=mmr` enables salience plus embedding-diversity selection
+- `SEMANTIC_LLM_CONCURRENCY` and `SEMANTIC_LLM_TIMEOUT_SECONDS` bound ingestion latency
+- `RELATION_LINK_TOP_K` bounds cross-chunk relation linking work
 
 ## Graph Visualization Strategy
 
