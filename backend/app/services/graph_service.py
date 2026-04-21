@@ -68,22 +68,32 @@ def display_label_for_kind(kind: str, text: str) -> str:
 
 class GraphService:
     def __init__(self) -> None:
-        self.driver = GraphDatabase.driver(
-            settings.neo4j_uri,
-            auth=(settings.neo4j_user, settings.neo4j_password),
-            max_connection_lifetime=50 * 60,
-            connection_acquisition_timeout=60,
-        )
+        self.available = False
+        self.driver = None
+        if settings.neo4j_uri:
+            self.driver = GraphDatabase.driver(
+                settings.neo4j_uri,
+                auth=(settings.neo4j_user, settings.neo4j_password),
+                max_connection_lifetime=50 * 60,
+                connection_acquisition_timeout=60,
+            )
 
     def wait_for_neo4j(self, max_wait_seconds: int = 90, initial_interval: float = 0.5) -> None:
+        if not self.driver:
+            if settings.neo4j_required:
+                raise RuntimeError("Neo4j is required but NEO4J_URI is empty.")
+            logger.warning("Neo4j disabled because NEO4J_URI is empty.")
+            self.available = False
+            return
         deadline = time.monotonic() + max_wait_seconds
         interval = initial_interval
         last_exc: Optional[Exception] = None
         while time.monotonic() < deadline:
             try:
                 self.driver.verify_connectivity()
+                self.available = True
                 return
-            except (ServiceUnavailable, OSError) as exc:
+            except (ServiceUnavailable, OSError, ValueError) as exc:
                 last_exc = exc
                 logger.warning(
                     "Neo4j not reachable at %s (%s). Retrying in %.1fs…",
@@ -101,9 +111,14 @@ class GraphService:
             "  2) From the project repository root, run:  docker compose up -d\n"
             "  3) Default Bolt port is 7687.\n"
         )
-        raise RuntimeError(hint + f"\nLast error: {last_exc}") from last_exc
+        if settings.neo4j_required:
+            raise RuntimeError(hint + f"\nLast error: {last_exc}") from last_exc
+        logger.error("%s\nContinuing with graph features disabled. Last error: %s", hint, last_exc)
+        self.available = False
 
     def ensure_schema(self) -> None:
+        if not self.available or not self.driver:
+            return
         statements = [
             "CREATE CONSTRAINT project_id_unique IF NOT EXISTS FOR (p:Project) REQUIRE p.id IS UNIQUE",
             "CREATE CONSTRAINT memory_unit_id_unique IF NOT EXISTS FOR (u:MemoryUnit) REQUIRE u.id IS UNIQUE",
@@ -114,9 +129,12 @@ class GraphService:
                 session.run(statement)
 
     def close(self) -> None:
-        self.driver.close()
+        if self.driver:
+            self.driver.close()
 
     def delete_project_graph(self, project_id: str) -> None:
+        if not self.available or not self.driver:
+            return
         with self.driver.session() as session:
             session.run(
                 """
@@ -127,6 +145,8 @@ class GraphService:
             )
 
     def delete_session_graph(self, project_id: str, session_id: str) -> None:
+        if not self.available or not self.driver:
+            return
         with self.driver.session() as session:
             session.run(
                 """
@@ -163,6 +183,8 @@ class GraphService:
         unit: Dict[str, Any],
         labels: Dict[str, Any],
     ) -> None:
+        if not self.available or not self.driver:
+            return
         display_labels = labels.get("display_labels", {})
         concept_labels = display_labels.get("concepts", {})
         entity_labels = display_labels.get("entities", {})
@@ -273,6 +295,8 @@ class GraphService:
                         )
 
     def link_units(self, project_id: str, source_unit_id: str, target_unit_id: str, relation_type: str) -> None:
+        if not self.available or not self.driver:
+            return
         relation_type = relation_type if relation_type in RELATION_TYPES else "ASSOCIATED_WITH"
         with self.driver.session() as session:
             self._merge_relation(
@@ -293,6 +317,8 @@ class GraphService:
         focus_id: str | None = None,
         seed_unit_ids: Sequence[str] | None = None,
     ) -> Dict[str, Any]:
+        if not self.available or not self.driver:
+            return {"nodes": [], "edges": [], "meta": {"view": view, "communities": [], "graph_available": False}}
         semantic_nodes, semantic_edges = self._load_semantic_graph(project_id)
         graph = nx.Graph()
         for node in semantic_nodes:
@@ -355,6 +381,42 @@ class GraphService:
         query: str,
         retrieved_units: Sequence[Dict[str, Any]],
     ) -> Dict[str, Any]:
+        if not self.available or not self.driver:
+            query_node_id = f"query:{normalize_key(query[:64])}"
+            nodes = [
+                {
+                    "id": query_node_id,
+                    "label": display_label_for_kind("query", query),
+                    "kind": "query",
+                    "score": 1.0,
+                    "detail": {"query": query, "full_text": query},
+                }
+            ]
+            edges = []
+            for rank, unit in enumerate(retrieved_units, start=1):
+                nodes.append(
+                    {
+                        "id": unit["id"],
+                        "label": display_label_for_kind(unit.get("source_type", "memory_unit"), unit.get("text", "")),
+                        "kind": unit.get("source_type", "memory_unit"),
+                        "score": 1.0,
+                        "detail": {"full_text": unit.get("text", "")},
+                    }
+                )
+                edges.append(
+                    {
+                        "id": f"retrieved:{query_node_id}:{unit['id']}",
+                        "source": query_node_id,
+                        "target": unit["id"],
+                        "type": "retrieved_by",
+                        "weight": max(0.1, 1.0 - (rank - 1) * 0.12),
+                    }
+                )
+            return {
+                "nodes": nodes,
+                "edges": edges,
+                "meta": {"view": "reasoning", "query": query, "graph_available": False},
+            }
         seed_unit_ids = [unit["id"] for unit in retrieved_units]
         graph_payload = self.get_graph(
             project_id=project_id,
@@ -386,6 +448,38 @@ class GraphService:
         graph_payload["edges"] = edges
         graph_payload["meta"]["query"] = query
         return graph_payload
+
+    def get_related_unit_ids(
+        self,
+        project_id: str,
+        seed_unit_ids: Sequence[str],
+        limit: int,
+    ) -> List[str]:
+        if not self.available or not self.driver or not seed_unit_ids or limit <= 0:
+            return []
+        with self.driver.session() as session:
+            rows = session.run(
+                """
+                MATCH (seed:MemoryUnit {project_id: $project_id})
+                WHERE seed.id IN $seed_ids
+                OPTIONAL MATCH (seed)-[:DERIVED_FROM]->(:SemanticNode {project_id: $project_id})<-[:DERIVED_FROM]-(semantic_neighbor:MemoryUnit {project_id: $project_id})
+                WHERE NOT semantic_neighbor.id IN $seed_ids
+                OPTIONAL MATCH (seed)-[r]->(unit_neighbor:MemoryUnit {project_id: $project_id})
+                WHERE type(r) IN $types AND NOT unit_neighbor.id IN $seed_ids
+                WITH collect(semantic_neighbor.id) + collect(unit_neighbor.id) AS candidates
+                UNWIND candidates AS candidate_id
+                WITH candidate_id, count(*) AS score
+                WHERE candidate_id IS NOT NULL
+                RETURN candidate_id
+                ORDER BY score DESC
+                LIMIT $limit
+                """,
+                project_id=project_id,
+                seed_ids=list(seed_unit_ids),
+                types=list(RELATION_TYPES),
+                limit=limit,
+            )
+            return [row["candidate_id"] for row in rows]
 
     def _load_semantic_graph(self, project_id: str) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         last_exc: BaseException | None = None

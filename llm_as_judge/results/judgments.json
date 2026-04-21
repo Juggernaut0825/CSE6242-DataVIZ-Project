@@ -10,11 +10,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly: identifies the math task and states the reason that only the math task has enough data for the experiments. Includes paper-specific wording and no unsupported additions.",
+        "rationale": "Matches the golden answer exactly: identifies the math task and states it was chosen because only/math contains enough data for the experiments. Includes paper-specific wording and no unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 669,
-          "completion_tokens": 318,
-          "total_tokens": 987
+          "prompt_tokens": 577,
+          "completion_tokens": 326,
+          "total_tokens": 903
         },
         "latency_seconds": 2.375121291,
         "retrieved_context_chars": 13998
@@ -26,30 +26,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested information, so it misses both the task and the reason. However, it does not hallucinate facts and remains appropriately uncertain.",
+        "rationale": "Does not provide the requested information, so it misses both the task and the reason. However, it does not hallucinate or contradict the golden answer; it simply abstains.",
         "judge_usage": {
-          "prompt_tokens": 669,
-          "completion_tokens": 318,
-          "total_tokens": 987
+          "prompt_tokens": 577,
+          "completion_tokens": 326,
+          "total_tokens": 903
         },
         "latency_seconds": 1.4636844170000005,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "Incorrectly answers with a methodology about comparing predicted and ground-truth answers rather than naming the math task and the reason for choosing it. It omits the golden-answer facts and adds unsupported content, reducing faithfulness.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly identifies the math task and the reason that it contains enough data for the experiments. It is complete and paper-specific. Minor unsupported elaboration ('allowing them to address various questions regarding negative-aware training') slightly reduces faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 669,
-          "completion_tokens": 318,
-          "total_tokens": 987
+          "prompt_tokens": 577,
+          "completion_tokens": 326,
+          "total_tokens": 903
         },
-        "latency_seconds": 6.075101040999925,
-        "retrieved_context_chars": 6559
+        "latency_seconds": 9.790922834,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -64,11 +64,11 @@
         "completeness": 4.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Captures the main idea that NAT learns from both successful and unsuccessful trajectories and that NUT lacks structured differentiation. However, it misses the key paper-specific detail that NAT explicitly marks correctness via a prefix/suffix, and it adds unsupported claims about outperforming, fewer action errors, and improved reasoning.",
+        "rationale": "Captures the main idea that NAT uses unsuccessful trajectories with explicit signals to distinguish correct vs. incorrect, and contrasts this with NUT mixing negatives more directly. However, it adds unsupported claims about outperforming methods, fewer action errors, and enhanced reasoning capabilities that are not in the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 1051,
-          "completion_tokens": 385,
-          "total_tokens": 1436
+          "prompt_tokens": 1041,
+          "completion_tokens": 378,
+          "total_tokens": 1419
         },
         "latency_seconds": 4.776010792,
         "retrieved_context_chars": 13998
@@ -77,87 +77,33 @@
         "accuracy": 2.0,
         "recall": 2.0,
         "faithfulness": 2.0,
-        "completeness": 3.0,
+        "completeness": 2.0,
         "specificity": 2.0,
         "overall": 2.0,
-        "rationale": "Gets the broad idea that NAT uses unsuccessful trajectories, but incorrectly states that NUT focuses solely on successful trajectories. The golden answer says NUT mixes positive and negative trajectories without explicit indicators. It also omits the crucial detail that NAT explicitly labels correctness in the training format.",
+        "rationale": "Correctly says NAT explicitly uses unsuccessful trajectories to teach failures, but it misstates NUT as using only successful trajectories. The golden answer says NUT mixes positive and negative trajectories without explicit indicators. This omission and contradiction substantially reduce accuracy and completeness.",
         "judge_usage": {
-          "prompt_tokens": 1051,
-          "completion_tokens": 385,
-          "total_tokens": 1436
+          "prompt_tokens": 1041,
+          "completion_tokens": 378,
+          "total_tokens": 1419
         },
         "latency_seconds": 1.7137397089999995,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 2.0,
-        "recall": 2.0,
-        "faithfulness": 2.0,
-        "completeness": 3.0,
-        "specificity": 2.0,
-        "overall": 2.0,
-        "rationale": "Correctly notes that NAT uses negative and positive examples, but incorrectly claims that NUT does not use negative examples at all. It misses the central paper-specific distinction that NAT explicitly marks whether a trajectory is successful, whereas NUT simply mixes trajectories without such markers. It also adds unsupported performance claims and citation detail.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 3.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Accurately explains that NAT explicitly marks positive/negative samples so the model can distinguish correct from incorrect while learning from both, and contrasts this with NUT lacking that structured distinction. It loses faithfulness for unsupported additions about outperforming methods, low-resource data, and performance trade-offs beyond the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 1051,
-          "completion_tokens": 385,
-          "total_tokens": 1436
+          "prompt_tokens": 1041,
+          "completion_tokens": 378,
+          "total_tokens": 1419
         },
-        "latency_seconds": 7.62839970899995,
-        "retrieved_context_chars": 6361
-      }
-    }
-  },
-  {
-    "question_id": "q_2402.11651_03",
-    "paper_id": "2402.11651",
-    "scores": {
-      "rag_gpt4o_mini": {
-        "accuracy": 5.0,
-        "recall": 5.0,
-        "faithfulness": 4.0,
-        "completeness": 5.0,
-        "specificity": 5.0,
-        "overall": 5.0,
-        "rationale": "Matches the golden answer: performance plateaus at about 11k negative samples, observed with 2k and 5k positive samples. It is specific and complete. Minor unsupported extra commentary about larger gains with fewer positives slightly reduces faithfulness.",
-        "judge_usage": {
-          "prompt_tokens": 856,
-          "completion_tokens": 357,
-          "total_tokens": 1213
-        },
-        "latency_seconds": 3.7542035,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Does not provide the requested findings, so it misses the key facts entirely. However, it does not introduce incorrect paper-specific claims, so faithfulness is high.",
-        "judge_usage": {
-          "prompt_tokens": 856,
-          "completion_tokens": 357,
-          "total_tokens": 1213
-        },
-        "latency_seconds": 1.2418332090000002,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 2.0,
-        "recall": 3.0,
-        "faithfulness": 2.0,
-        "completeness": 3.0,
-        "specificity": 3.0,
-        "overall": 3.0,
-        "rationale": "Correctly mentions the 2k and 5k positive-sample settings and that negative samples were varied up to 12k, but it does not state the key plateau point of about 11k negatives and instead hedges that the exact point depends on context. That omission and unsupported generalization reduce accuracy and faithfulness.",
-        "judge_usage": {
-          "prompt_tokens": 856,
-          "completion_tokens": 357,
-          "total_tokens": 1213
-        },
-        "latency_seconds": 6.521476541999959,
-        "retrieved_context_chars": 6747
+        "latency_seconds": 14.148470542,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -172,11 +118,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly, naming both factors: the number of positive samples and the intrinsic quality of the negative samples.",
+        "rationale": "Matches the golden answer exactly, naming both factors: the number of positive samples and the intrinsic quality of negative samples. No unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 680,
+          "prompt_tokens": 577,
           "completion_tokens": 307,
-          "total_tokens": 987
+          "total_tokens": 884
         },
         "latency_seconds": 2.4804372920000004,
         "retrieved_context_chars": 13998
@@ -188,13 +134,67 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested factors, so it has no accuracy or recall and is incomplete. However, it does not introduce unsupported claims.",
+        "rationale": "Does not provide the requested factors, so it fails on accuracy, recall, completeness, and specificity. However, it is faithful in that it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 680,
+          "prompt_tokens": 577,
           "completion_tokens": 307,
-          "total_tokens": 987
+          "total_tokens": 884
         },
         "latency_seconds": 0.660669458000001,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer exactly, including both determining factors and the paper-specific nuance that gains from negatives are larger when there are fewer positive samples. No unsupported claims.",
+        "judge_usage": {
+          "prompt_tokens": 577,
+          "completion_tokens": 307,
+          "total_tokens": 884
+        },
+        "latency_seconds": 5.497675167000001,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2402.11651_03",
+    "paper_id": "2402.11651",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer on the key facts: performance plateaus at about 11k negative samples, observed when positive samples were fixed at 2k and 5k. It is specific and complete. Slightly reduced faithfulness because it adds extra claims about larger gains with fewer positives and changing ideal ratios, which are not needed for the question and are unsupported relative to the golden answer.",
+        "judge_usage": {
+          "prompt_tokens": 681,
+          "completion_tokens": 407,
+          "total_tokens": 1088
+        },
+        "latency_seconds": 3.7542035,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
+        "accuracy": 0.0,
+        "recall": 0.0,
+        "faithfulness": 3.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
+        "overall": 1.0,
+        "rationale": "Does not provide the requested findings, so it fails on accuracy, recall, completeness, and specificity. It is somewhat faithful in that it does not hallucinate concrete facts, but it is non-responsive and gives only a generic uncertainty statement.",
+        "judge_usage": {
+          "prompt_tokens": 681,
+          "completion_tokens": 407,
+          "total_tokens": 1088
+        },
+        "latency_seconds": 1.2418332090000002,
         "retrieved_context_chars": 0
       },
       "papermem": {
@@ -204,14 +204,14 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Correctly identifies both factors and includes the key paper-specific phrasing. Slightly reduced faithfulness because it adds interpretive commentary about diminishing marginal utility and needing fewer negatives when more positives are available, which goes beyond the golden answer.",
+        "rationale": "Correctly states that performance stops improving substantially at about 11k negative samples and that this was observed with positives fixed at 2k and 5k. It is complete and paper-specific. Faithfulness is slightly lower than perfect because it adds an extra detail about varying negatives from 0 to 12k, which is not part of the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 680,
-          "completion_tokens": 307,
-          "total_tokens": 987
+          "prompt_tokens": 681,
+          "completion_tokens": 407,
+          "total_tokens": 1088
         },
-        "latency_seconds": 6.594611249999957,
-        "retrieved_context_chars": 6191
+        "latency_seconds": 9.785399208,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -224,13 +224,13 @@
         "recall": 4.0,
         "faithfulness": 3.0,
         "completeness": 4.0,
-        "specificity": 3.0,
+        "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly states that Vanilla makes a reasoning error and NUT makes an action error, and says NAT is correct. However, it omits the specific NAT answer value 5600 and adds an unsupported interpretive claim about integrating negative examples improving performance.",
+        "rationale": "Correctly identifies Vanilla as a reasoning error and NUT as an action error, and says NAT is correct. However, it omits the specific correct answer '5600' and adds an unsupported interpretive claim about integrating negative examples and improving performance.",
         "judge_usage": {
-          "prompt_tokens": 755,
-          "completion_tokens": 353,
-          "total_tokens": 1108
+          "prompt_tokens": 657,
+          "completion_tokens": 337,
+          "total_tokens": 994
         },
         "latency_seconds": 2.5585060000000013,
         "retrieved_context_chars": 13998
@@ -242,30 +242,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question and provides none of the key facts from the golden answer. It is faithful in the sense that it avoids hallucinating paper details, but it is entirely incomplete and non-specific.",
+        "rationale": "Does not answer the question and provides none of the gold facts. It is faithful in the sense that it does not hallucinate content, but it is entirely incomplete and nonspecific.",
         "judge_usage": {
-          "prompt_tokens": 755,
-          "completion_tokens": 353,
-          "total_tokens": 1108
+          "prompt_tokens": 657,
+          "completion_tokens": 337,
+          "total_tokens": 994
         },
         "latency_seconds": 2.024704584,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 0.2,
-        "rationale": "Fails to provide the requested paper-specific facts. It says the evidence is insufficient, then adds unsupported general speculation about Vanilla, NUT, and NAT that is not grounded in the golden answer. It misses both the error-type distinction and the NAT answer 5600.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly states that Vanilla makes a reasoning error and NUT makes an action error, and that NAT gives the correct answer. It misses the specific value '5600,' which reduces recall and completeness slightly.",
         "judge_usage": {
-          "prompt_tokens": 755,
-          "completion_tokens": 353,
-          "total_tokens": 1108
+          "prompt_tokens": 657,
+          "completion_tokens": 337,
+          "total_tokens": 994
         },
-        "latency_seconds": 6.318664916999978,
-        "retrieved_context_chars": 6908
+        "latency_seconds": 9.962514749999997,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -274,17 +274,17 @@
     "paper_id": "2310.00034",
     "scores": {
       "rag_gpt4o_mini": {
-        "accuracy": 4.0,
+        "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 3.0,
+        "faithfulness": 4.0,
         "completeness": 5.0,
         "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Captures the main idea well: a small subset of salient weights is kept in higher precision, the rest are binarized, and salient weights are frozen during QAT. It also mentions scaling for the binarized weights. However, it adds unsupported details about how salient weights are identified (magnitude and Hessian metrics) and uses broader claims about reasoning recovery not required by the golden answer.",
+        "overall": 5.0,
+        "rationale": "Matches the golden answer closely: PB-LLM keeps a small subset of salient weights in higher precision, binarizes the rest to 1 bit, freezes salient weights during QAT, and applies an optimal scaling strategy to the residual binarized weights. Minor unsupported addition: salient-weight identification via magnitude/Hessian is extra detail not required by the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 967,
-          "completion_tokens": 396,
-          "total_tokens": 1363
+          "prompt_tokens": 902,
+          "completion_tokens": 401,
+          "total_tokens": 1303
         },
         "latency_seconds": 2.4648425840000012,
         "retrieved_context_chars": 13998
@@ -296,30 +296,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts. It is faithful in the sense that it does not hallucinate, but it is entirely incomplete and non-specific.",
+        "rationale": "Provides no substantive answer to the question, so it misses all key facts. However, it does not hallucinate or contradict the golden answer; it simply abstains.",
         "judge_usage": {
-          "prompt_tokens": 967,
-          "completion_tokens": 396,
-          "total_tokens": 1363
+          "prompt_tokens": 902,
+          "completion_tokens": 401,
+          "total_tokens": 1303
         },
         "latency_seconds": 2.772796917000001,
         "retrieved_context_chars": 0
       },
       "papermem": {
         "accuracy": 4.0,
-        "recall": 3.0,
+        "recall": 4.0,
         "faithfulness": 4.0,
-        "completeness": 3.0,
+        "completeness": 4.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly states the central idea of partial binarization: salient weights are kept at higher precision and non-salient weights are binarized. It is reasonably paper-specific, but it omits the QAT detail that salient weights are frozen and the optimal scaling strategy for residual binarized weights, so recall and completeness are only partial.",
+        "rationale": "Correctly states the main idea of partial binarization: preserve a small set of salient weights in higher precision and binarize most others, and it notes that salient weights are frozen during QAT. It omits the explicit golden-answer detail that the remaining weights are binarized to 1 bit and only indirectly covers the derived optimal scaling strategy. Extra mention of magnitude/Hessian detection is unsupported by the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 967,
-          "completion_tokens": 396,
-          "total_tokens": 1363
+          "prompt_tokens": 902,
+          "completion_tokens": 401,
+          "total_tokens": 1303
         },
-        "latency_seconds": 7.182279167000047,
-        "retrieved_context_chars": 6967
+        "latency_seconds": 14.297996957999999,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -334,11 +334,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly with the paper-specific value 'at most 2.7 bits' and adds no unsupported claims.",
+        "rationale": "Matches the golden answer exactly: 'at most 2.7 bits.' It fully answers the question with the correct paper-specific value and adds no unsupported claims.",
         "judge_usage": {
-          "prompt_tokens": 895,
-          "completion_tokens": 324,
-          "total_tokens": 1219
+          "prompt_tokens": 598,
+          "completion_tokens": 312,
+          "total_tokens": 910
         },
         "latency_seconds": 1.8390040830000007,
         "retrieved_context_chars": 13998
@@ -350,30 +350,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question, so it has no correct content or coverage. It is faithful in that it does not hallucinate, but it is incomplete and non-specific.",
+        "rationale": "Does not provide the requested value, so it fails on accuracy, recall, completeness, and specificity. However, it is faithful in that it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 895,
-          "completion_tokens": 324,
-          "total_tokens": 1219
+          "prompt_tokens": 598,
+          "completion_tokens": 312,
+          "total_tokens": 910
         },
         "latency_seconds": 1.0071492920000011,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 4.0,
+        "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 2.0,
+        "faithfulness": 5.0,
         "completeness": 5.0,
         "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Provides the correct final value of 2.7 bits and explains the storage-cost calculation in a paper-specific way. However, it introduces uncertainty and an unsupported alternative '1.7 bits' interpretation that is not in the golden answer, reducing faithfulness and slightly hurting accuracy.",
+        "overall": 5.0,
+        "rationale": "Matches the golden answer exactly: 'at most 2.7 bits.' It directly answers the question with the correct paper-specific figure and includes no unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 895,
-          "completion_tokens": 324,
-          "total_tokens": 1219
+          "prompt_tokens": 598,
+          "completion_tokens": 312,
+          "total_tokens": 910
         },
-        "latency_seconds": 8.412972249999939,
-        "retrieved_context_chars": 7196
+        "latency_seconds": 9.709717875000003,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -388,11 +388,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly: PB-LLM 30% = 66.9, slightly above LLM-QAT's 66.6 and below full-precision LLaMA-7B's 68.7. Includes precise paper-specific values without unsupported additions.",
+        "rationale": "Matches the golden answer exactly: PB-LLM 30% is 66.9, slightly above LLM-QAT's 66.6 and below full-precision LLaMA-7B's 68.7. Fully answers the comparison with precise paper-specific numbers and no unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 822,
-          "completion_tokens": 353,
-          "total_tokens": 1175
+          "prompt_tokens": 716,
+          "completion_tokens": 378,
+          "total_tokens": 1094
         },
         "latency_seconds": 2.822129457999999,
         "retrieved_context_chars": 13998
@@ -400,34 +400,34 @@
       "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 5.0,
+        "faithfulness": 3.0,
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no answer to the question and omits all key facts from the golden answer. However, it does not introduce incorrect factual claims, so faithfulness is high despite zero recall/completeness.",
+        "rationale": "Provides no substantive answer to the question and omits all key facts and comparisons. It is noncommittal rather than hallucinated, so faithfulness is middling, but accuracy, recall, completeness, and specificity are effectively absent.",
         "judge_usage": {
-          "prompt_tokens": 822,
-          "completion_tokens": 353,
-          "total_tokens": 1175
+          "prompt_tokens": 716,
+          "completion_tokens": 378,
+          "total_tokens": 1094
         },
         "latency_seconds": 1.9757457079999998,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.4,
-        "rationale": "Fails to provide the requested score or comparisons from the golden answer. It adds unsupported content about training efficiency and iteration counts, which is not part of the golden answer and weakens faithfulness. Very limited paper-specific relevance to the asked comparison.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer exactly with all required paper-specific values: 66.9 for PB-LLM 30%, 66.6 for LLM-QAT, and 68.7 for full-precision LLaMA-7B. Complete, precise, and free of unsupported claims.",
         "judge_usage": {
-          "prompt_tokens": 822,
-          "completion_tokens": 353,
-          "total_tokens": 1175
+          "prompt_tokens": 716,
+          "completion_tokens": 378,
+          "total_tokens": 1094
         },
-        "latency_seconds": 7.4958307919999925,
-        "retrieved_context_chars": 6601
+        "latency_seconds": 9.746039167,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -439,14 +439,14 @@
         "accuracy": 1.0,
         "recall": 2.0,
         "faithfulness": 1.0,
-        "completeness": 3.0,
+        "completeness": 2.0,
         "specificity": 2.0,
         "overall": 2.0,
-        "rationale": "Gets the dataset name and roughly notes 1–10K iterations, but most key details are wrong or unsupported: optimizer is omitted, learning rate/schedule and batch size are taken from another source and contradict the golden answer. It addresses all requested fields but with substantial inaccuracies and hallucinated additions.",
+        "rationale": "Correctly identifies RedPajama-simple-1B and mentions 1-10K iterations, which partially overlaps with the gold 10K iterations. However, it fails to provide the correct optimizer, learning rate, schedule, and batch size, and introduces unsupported details from another paper (different learning rates, warmup, and batch sizes).",
         "judge_usage": {
-          "prompt_tokens": 1011,
-          "completion_tokens": 349,
-          "total_tokens": 1360
+          "prompt_tokens": 915,
+          "completion_tokens": 389,
+          "total_tokens": 1304
         },
         "latency_seconds": 5.0689407079999995,
         "retrieved_context_chars": 13998
@@ -458,30 +458,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts. However, it stays faithful by explicitly expressing uncertainty and not inventing details.",
+        "rationale": "Provides no substantive answer, so it misses all key facts from the gold answer. However, it does not hallucinate details and is faithful in explicitly expressing uncertainty.",
         "judge_usage": {
-          "prompt_tokens": 1011,
-          "completion_tokens": 349,
-          "total_tokens": 1360
+          "prompt_tokens": 915,
+          "completion_tokens": 389,
+          "total_tokens": 1304
         },
         "latency_seconds": 1.5523019169999994,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 2.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Mostly says details are unavailable, but the one concrete claim given (learning rate 1e-6, one epoch) is unsupported and inconsistent with the golden answer. It nominally covers the requested categories, yet provides essentially none of the correct paper-specific training setup.",
+        "accuracy": 5.0,
+        "recall": 4.0,
+        "faithfulness": 5.0,
+        "completeness": 4.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the gold answer on dataset, optimizer, zero weight decay, learning rate, cosine decay, batch size, and 10,000 iterations. It omits the note that RedPajama-simple-1B is a 0.1% subset of RedPajama-1T and that training starts from a pretrained model, so recall/completeness are slightly reduced.",
         "judge_usage": {
-          "prompt_tokens": 1011,
-          "completion_tokens": 349,
-          "total_tokens": 1360
+          "prompt_tokens": 915,
+          "completion_tokens": 389,
+          "total_tokens": 1304
         },
-        "latency_seconds": 6.705049667000026,
-        "retrieved_context_chars": 7199
+        "latency_seconds": 10.448897124999995,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -493,14 +493,14 @@
         "accuracy": 4.0,
         "recall": 3.0,
         "faithfulness": 4.0,
-        "completeness": 4.0,
+        "completeness": 3.0,
         "specificity": 3.0,
-        "overall": 4.0,
-        "rationale": "Correctly states the main limitation: existing binarization methods are unsuitable for LLMs and can perform worse than random guessing. It also cites supplementary evidence that multiple prior methods fail on zero-shot commonsense reasoning tasks. However, it omits the key quantitative details from the golden answer: mean scores around 0.30–0.32 and random performance at 0.36, and it does not name the specific methods.",
+        "overall": 3.0,
+        "rationale": "Correctly states the main limitation: existing binarization methods fail on LLMs and can perform worse than random guessing. It mentions supplementary evidence and the evaluation setting, but omits the key numeric evidence from the golden answer (mean scores around 0.30–0.32 vs random 0.36) and does not name the specific methods or OPT.",
         "judge_usage": {
-          "prompt_tokens": 834,
-          "completion_tokens": 420,
-          "total_tokens": 1254
+          "prompt_tokens": 752,
+          "completion_tokens": 382,
+          "total_tokens": 1134
         },
         "latency_seconds": 2.0730668340000005,
         "retrieved_context_chars": 13947
@@ -512,84 +512,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts from the golden answer. It is faithful in the sense that it does not hallucinate content, but it is entirely incomplete and non-specific.",
+        "rationale": "Provides no substantive answer to the question. It does not cover the limitation or the supplementary evidence. However, it does not hallucinate content, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 834,
-          "completion_tokens": 420,
-          "total_tokens": 1254
+          "prompt_tokens": 752,
+          "completion_tokens": 382,
+          "total_tokens": 1134
         },
         "latency_seconds": 0.978762584,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 2.0,
-        "recall": 1.0,
-        "faithfulness": 2.0,
-        "completeness": 2.0,
-        "specificity": 2.0,
-        "overall": 2.0,
-        "rationale": "Partially captures that existing binarization methods fail to preserve LLM reasoning ability, but it shifts focus to PB-LLM rather than directly answering the limitation and supplementary evidence requested. It does not include the crucial supplementary-table evidence from the golden answer, such as prior methods scoring about 0.30–0.32 versus random at 0.36, and introduces unsupported discussion of salient weights.",
-        "judge_usage": {
-          "prompt_tokens": 834,
-          "completion_tokens": 420,
-          "total_tokens": 1254
-        },
-        "latency_seconds": 7.5696327499999825,
-        "retrieved_context_chars": 6389
-      }
-    }
-  },
-  {
-    "question_id": "q_2312.10793_02",
-    "paper_id": "2312.10793",
-    "scores": {
-      "rag_gpt4o_mini": {
         "accuracy": 4.0,
-        "recall": 4.0,
-        "faithfulness": 3.0,
-        "completeness": 4.0,
-        "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Correctly lists the six NLP benchmarks, HumanEval for coding, and FLASK with eight frequent alignment skills and 1,180 samples. However, it omits that GPT-4 scored responses according to human-written principles, and adds unsupported details about zero-shot experiments and fine-tuning datasets/sampling strategies.",
-        "judge_usage": {
-          "prompt_tokens": 992,
-          "completion_tokens": 368,
-          "total_tokens": 1360
-        },
-        "latency_seconds": 3.5406404999999985,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it does not cover the requested evaluation setup. It is faithful in the sense that it does not hallucinate details, but it has no useful recall or completeness.",
-        "judge_usage": {
-          "prompt_tokens": 992,
-          "completion_tokens": 368,
-          "total_tokens": 1360
-        },
-        "latency_seconds": 1.8559049169999966,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 2.0,
-        "recall": 1.0,
-        "faithfulness": 3.0,
-        "completeness": 1.0,
+        "recall": 3.0,
+        "faithfulness": 4.0,
+        "completeness": 3.0,
         "specificity": 2.0,
-        "overall": 2.0,
-        "rationale": "Mentions FLASK and GPT-4-0613 scoring with scaled scores, which is partially aligned with the golden answer, but fails to provide the NLP benchmark list or HumanEval for coding. It also adds vague discussion about mixing ratios and benchmark trends that does not answer the question directly.",
+        "overall": 3.0,
+        "rationale": "Correctly captures the core claim that existing binarization methods perform worse than random when applied to LLMs. It references supporting evaluation evidence, but lacks the supplementary table's specific details: named methods, OPT setting, and the numerical comparison of 0.30–0.32 versus random 0.36.",
         "judge_usage": {
-          "prompt_tokens": 992,
-          "completion_tokens": 368,
-          "total_tokens": 1360
+          "prompt_tokens": 752,
+          "completion_tokens": 382,
+          "total_tokens": 1134
         },
-        "latency_seconds": 6.817101125000022,
-        "retrieved_context_chars": 6901
+        "latency_seconds": 10.274096624999999,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -604,11 +550,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on all key points: Alpaca as 52K general instruction pairs, P3 built by sampling 1K per subtask to 660K total, CodeAlpaca with 20K samples, and a balanced comparison using 20K from each dataset.",
+        "rationale": "Matches the golden answer on all key points: Alpaca as 52K general instruction pairs, P3 built by sampling 1K instances per subtask to reach 660K, CodeAlpaca with 20K samples, and 20K randomly sampled from each for the balanced comparison.",
         "judge_usage": {
-          "prompt_tokens": 830,
-          "completion_tokens": 371,
-          "total_tokens": 1201
+          "prompt_tokens": 857,
+          "completion_tokens": 360,
+          "total_tokens": 1217
         },
         "latency_seconds": 2.316663708,
         "retrieved_context_chars": 13998
@@ -620,30 +566,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer and omits all key facts from the golden answer. It is cautious rather than hallucinatory, so faithfulness is high, but accuracy, recall, completeness, and specificity are absent.",
+        "rationale": "Provides no substantive answer, so it misses all required facts and does not answer the question. However, it does not introduce incorrect or hallucinated content.",
         "judge_usage": {
-          "prompt_tokens": 830,
-          "completion_tokens": 371,
-          "total_tokens": 1201
+          "prompt_tokens": 857,
+          "completion_tokens": 360,
+          "total_tokens": 1217
         },
         "latency_seconds": 0.7094053340000013,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Correctly identifies Alpaca, CodeAlpaca, and P3 as the three datasets, but fails to provide the construction details and final balanced 20K-per-dataset sampling. It also introduces unsupported content ('PedCorpus') and incorrectly claims the instance counts are unclear, reducing faithfulness and accuracy.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly covers the construction and sizes of Alpaca, P3, and CodeAlpaca, and states that 20K from each were used in the balanced comparison. Minor unsupported addition: explicitly totals this as 60K training instances, which is implied but not stated in the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 830,
-          "completion_tokens": 371,
-          "total_tokens": 1201
+          "prompt_tokens": 857,
+          "completion_tokens": 360,
+          "total_tokens": 1217
         },
-        "latency_seconds": 6.477439457999935,
-        "retrieved_context_chars": 5773
+        "latency_seconds": 10.314624375000001,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -654,15 +600,15 @@
       "rag_gpt4o_mini": {
         "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 4.0,
+        "faithfulness": 3.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on the trend (first decreased, then increased), the peak ratio (1.5), and the slight drop at 2.0. The added overfitting interpretation is not stated in the golden answer, so faithfulness is slightly reduced.",
+        "rationale": "Matches the golden answer on the trend (decrease then increase), the peak ratio (1.5), and the slight drop at 2.0. It is specific to NLP and code benchmarks. However, it adds an unsupported interpretation about overfitting, so faithfulness is reduced.",
         "judge_usage": {
-          "prompt_tokens": 750,
-          "completion_tokens": 369,
-          "total_tokens": 1119
+          "prompt_tokens": 651,
+          "completion_tokens": 353,
+          "total_tokens": 1004
         },
         "latency_seconds": 1.8617135000000005,
         "retrieved_context_chars": 13998
@@ -674,30 +620,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested findings or peak ratio, so it fails on accuracy, recall, completeness, and specificity. It is faithful in that it does not hallucinate content and explicitly states uncertainty.",
+        "rationale": "Does not provide the requested findings, so it misses the key facts entirely. It is faithful in the sense that it does not hallucinate, but it is incomplete and non-specific.",
         "judge_usage": {
-          "prompt_tokens": 750,
-          "completion_tokens": 369,
-          "total_tokens": 1119
+          "prompt_tokens": 651,
+          "completion_tokens": 353,
+          "total_tokens": 1004
         },
         "latency_seconds": 1.113147583,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 2.0,
-        "recall": 2.0,
-        "faithfulness": 4.0,
-        "completeness": 2.0,
-        "specificity": 2.0,
-        "overall": 2.0,
-        "rationale": "Correctly captures the general trend that performance first decreases and then increases with more specialized instructions, but misses the key fact that both NLP and code peak at 1.5 and then drop slightly at 2.0. It stays mostly faithful by acknowledging uncertainty rather than inventing the ratio, though it omits important paper-specific details.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Fully matches the golden answer: performance first decreased then increased as specialized-instruction ratio rose, both NLP and code peaked at 1.5, and both dropped slightly at 2.0. It is complete and paper-specific without unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 750,
-          "completion_tokens": 369,
-          "total_tokens": 1119
+          "prompt_tokens": 651,
+          "completion_tokens": 353,
+          "total_tokens": 1004
         },
-        "latency_seconds": 6.500624708999908,
-        "retrieved_context_chars": 7159
+        "latency_seconds": 8.713593125000003,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2312.10793_02",
+    "paper_id": "2312.10793",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 3.0,
+        "completeness": 4.0,
+        "specificity": 5.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies the NLP benchmarks, HumanEval for coding, and FLASK with eight frequent alignment skills and 1,180 samples. However, it omits that GPT-4 scored responses according to human-written principles and adds unsupported details about zero-shot setting and fine-tuning datasets/sampling, which lowers faithfulness.",
+        "judge_usage": {
+          "prompt_tokens": 1029,
+          "completion_tokens": 372,
+          "total_tokens": 1401
+        },
+        "latency_seconds": 3.5406404999999985,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
+        "accuracy": 0.0,
+        "recall": 0.0,
+        "faithfulness": 5.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
+        "overall": 1.0,
+        "rationale": "Does not provide the requested evaluation setup or any of the benchmarks/frameworks from the golden answer. It is faithful in the sense that it does not hallucinate, but it fails to answer the question.",
+        "judge_usage": {
+          "prompt_tokens": 1029,
+          "completion_tokens": 372,
+          "total_tokens": 1401
+        },
+        "latency_seconds": 1.8559049169999966,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 5.0,
+        "overall": 4.0,
+        "rationale": "Accurately lists all six NLP benchmarks, HumanEval, and FLASK with the eight most frequent alignment skills and 1,180 samples. It misses the detail that GPT-4 scored responses according to human-written principles, but otherwise stays close to the golden answer without notable unsupported additions.",
+        "judge_usage": {
+          "prompt_tokens": 1029,
+          "completion_tokens": 372,
+          "total_tokens": 1401
+        },
+        "latency_seconds": 9.823248083000003,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -712,11 +712,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly: reports drops of 2.8 (7B) and 3.6 (13B) and correctly interprets P3 as harmful for chatbot-style fine-tuning and conversational ability.",
+        "rationale": "Matches the golden answer exactly on both numeric drops (2.8 for 7B, 3.6 for 13B) and the interpretation that P3 harms fine-tuning for chatbot-style models and conversational ability.",
         "judge_usage": {
-          "prompt_tokens": 791,
-          "completion_tokens": 348,
-          "total_tokens": 1139
+          "prompt_tokens": 756,
+          "completion_tokens": 341,
+          "total_tokens": 1097
         },
         "latency_seconds": 5.832899249999997,
         "retrieved_context_chars": 13998
@@ -728,30 +728,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not hallucinate or contradict the golden answer.",
+        "rationale": "Provides no substantive answer and omits all key facts from the golden answer. It is not contradictory or hallucinatory, but it fails to answer the question.",
         "judge_usage": {
-          "prompt_tokens": 791,
-          "completion_tokens": 348,
-          "total_tokens": 1139
+          "prompt_tokens": 756,
+          "completion_tokens": 341,
+          "total_tokens": 1097
         },
         "latency_seconds": 1.6205757500000004,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 0.6,
-        "rationale": "Contradicts the golden answer by claiming P3 had a positive effect, omits the required 2.8 and 3.6 point drops, and gives an interpretation opposite to the paper's conclusion. It is somewhat specific about P3/task mixtures, but the content is unsupported relative to the golden answer.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly gives both alignment-skill drops and the core interpretation that P3 negatively affects chatbot fine-tuning and conversational abilities. It adds extra claims about coding instructions and broader instruction-mixing effects that are not needed by the golden answer, so faithfulness is slightly lower.",
         "judge_usage": {
-          "prompt_tokens": 791,
-          "completion_tokens": 348,
-          "total_tokens": 1139
+          "prompt_tokens": 756,
+          "completion_tokens": 341,
+          "total_tokens": 1097
         },
-        "latency_seconds": 5.966336458000001,
-        "retrieved_context_chars": 6991
+        "latency_seconds": 8.669112083000002,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -762,15 +762,15 @@
       "rag_gpt4o_mini": {
         "accuracy": 1.0,
         "recall": 0.0,
-        "faithfulness": 4.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
+        "faithfulness": 3.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The answer does not provide the acknowledged limitations from the paper. It is largely non-committal rather than incorrect, so it avoids major hallucination, but it misses both key golden points: that only LLaMA-2 7B/13B were tested and that behavior may vary by model size, with larger models possibly tolerating more instructions.",
+        "rationale": "The answer does not provide the acknowledged limitations from the golden answer. It is noncommittal rather than incorrect, so faithfulness is moderate, but it fails to cover the key facts about only testing LLaMA-2 7B/13B and possible variation by model size.",
         "judge_usage": {
-          "prompt_tokens": 721,
-          "completion_tokens": 382,
-          "total_tokens": 1103
+          "prompt_tokens": 670,
+          "completion_tokens": 387,
+          "total_tokens": 1057
         },
         "latency_seconds": 1.9080808329999996,
         "retrieved_context_chars": 13998
@@ -778,34 +778,34 @@
       "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 5.0,
+        "faithfulness": 4.0,
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The system declines to answer and provides none of the gold information. It is faithful in the sense that it makes no unsupported claims, but it completely fails to cover the paper-specific limitations.",
+        "rationale": "The system declines to answer and provides none of the gold facts. It does not hallucinate content, so faithfulness is relatively high, but accuracy, recall, completeness, and specificity are effectively absent.",
         "judge_usage": {
-          "prompt_tokens": 721,
-          "completion_tokens": 382,
-          "total_tokens": 1103
+          "prompt_tokens": 670,
+          "completion_tokens": 387,
+          "total_tokens": 1057
         },
         "latency_seconds": 1.4858492080000012,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "The answer gives limitations unrelated to the golden answer and appears to hallucinate unsupported issues such as technical jargon, computational efficiency, and privacy/fairness. It misses the actual acknowledged scope limitation of testing only LLaMA-2 7B and 13B and the note that behavior may vary with model size.",
+        "accuracy": 2.0,
+        "recall": 2.0,
+        "faithfulness": 1.0,
+        "completeness": 2.0,
+        "specificity": 3.0,
+        "overall": 2.0,
+        "rationale": "The answer captures one key gold point: behavior may vary by model size and larger models may handle more instructions better. However, it misses the explicit limitation that experiments were only on LLaMA-2 7B and 13B, and it adds unsupported claims about a 20K instruction dataset and 1:1 mixing ratio that are not in the golden answer, hurting faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 721,
-          "completion_tokens": 382,
-          "total_tokens": 1103
+          "prompt_tokens": 670,
+          "completion_tokens": 387,
+          "total_tokens": 1057
         },
-        "latency_seconds": 6.490977166999983,
-        "retrieved_context_chars": 6229
+        "latency_seconds": 9.289208375000001,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -820,11 +820,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on the two organizing avenues (LLM-enhanced EA and EA-enhanced LLM) and names all listed application scenarios: code generation, software engineering, neural architecture search, and various generation tasks. Minor unsupported elaborations about black-box settings, domain knowledge, and text-processing roles reduce faithfulness slightly.",
+        "rationale": "Correctly gives the two main avenues, LLM-enhanced EA and EA-enhanced LLM, and names all application scenarios from the golden answer: code generation, software engineering, neural architecture search, and various generation tasks. Minor unsupported elaboration about black-box settings, domain knowledge, and text processing lowers faithfulness slightly.",
         "judge_usage": {
-          "prompt_tokens": 880,
-          "completion_tokens": 384,
-          "total_tokens": 1264
+          "prompt_tokens": 752,
+          "completion_tokens": 386,
+          "total_tokens": 1138
         },
         "latency_seconds": 4.683571375,
         "retrieved_context_chars": 13998
@@ -836,30 +836,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer to the question, so it misses all key facts and application scenarios. It is faithful in the sense that it does not hallucinate, but it is incomplete and non-specific.",
         "judge_usage": {
-          "prompt_tokens": 880,
-          "completion_tokens": 384,
-          "total_tokens": 1264
+          "prompt_tokens": 752,
+          "completion_tokens": 386,
+          "total_tokens": 1138
         },
         "latency_seconds": 1.2374174579999995,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Does not state the paper's main organization into LLM-enhanced EA and EA-enhanced LLM. It only mentions one correct application area indirectly (neural architecture search) while omitting code generation, software engineering, and various generation tasks. It adds unsupported claims about collaborative mechanisms, genetic algorithm selection suggestions, and future research framing, which hurts faithfulness.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 4.0,
+        "rationale": "Captures the two main avenues and the integrated synergy applications, and explicitly names neural architecture search, code generation, and software engineering. However, it reframes the organization as three research paradigms rather than two main avenues plus highlighted integrated synergy, and narrows 'various generation tasks' to 'text generation,' which is somewhat less faithful to the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 880,
-          "completion_tokens": 384,
-          "total_tokens": 1264
+          "prompt_tokens": 752,
+          "completion_tokens": 386,
+          "total_tokens": 1138
         },
-        "latency_seconds": 6.840812457999959,
-        "retrieved_context_chars": 7197
+        "latency_seconds": 5.496669499999996,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -874,11 +874,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer essentially exactly, including Transformer-based model, large parameter count, massive datasets, and self-/semi-supervised pretraining.",
+        "rationale": "Matches the golden answer essentially verbatim, including Transformer-based, large number of parameters, massive datasets, and self-/semi-supervised pretraining.",
         "judge_usage": {
-          "prompt_tokens": 644,
-          "completion_tokens": 307,
-          "total_tokens": 951
+          "prompt_tokens": 574,
+          "completion_tokens": 322,
+          "total_tokens": 896
         },
         "latency_seconds": 1.4320703749999986,
         "retrieved_context_chars": 13998
@@ -890,67 +890,13 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the paper's definition at all, so it misses all key facts. However, it stays faithful by explicitly expressing uncertainty and not inventing content.",
+        "rationale": "Provides no answer to the question, so it misses all key facts and lacks completeness/specificity. However, it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 644,
-          "completion_tokens": 307,
-          "total_tokens": 951
+          "prompt_tokens": 574,
+          "completion_tokens": 322,
+          "total_tokens": 896
         },
         "latency_seconds": 0.8385670420000011,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 1.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Fails to give the footnote definition and instead offers a different characterization of LLMs as reasoning engines interacting with applications. This misses the golden answer's core details and adds unsupported content.",
-        "judge_usage": {
-          "prompt_tokens": 644,
-          "completion_tokens": 307,
-          "total_tokens": 951
-        },
-        "latency_seconds": 7.197451957999988,
-        "retrieved_context_chars": 6342
-      }
-    }
-  },
-  {
-    "question_id": "q_2401.10034_03",
-    "paper_id": "2401.10034",
-    "scores": {
-      "rag_gpt4o_mini": {
-        "accuracy": 3.0,
-        "recall": 4.0,
-        "faithfulness": 2.0,
-        "completeness": 4.0,
-        "specificity": 3.0,
-        "overall": 3.0,
-        "rationale": "Captures the main limitations that LLMs are black-box and have inflexible search, and mentions flexible global search by EAs. However, it misses the golden answer's points about finite search capability, iterative optimization rather than one-shot search, and adds unsupported claims about leveraging domain knowledge, prompt engineering, and generating optimization algorithms.",
-        "judge_usage": {
-          "prompt_tokens": 1073,
-          "completion_tokens": 377,
-          "total_tokens": 1450
-        },
-        "latency_seconds": 2.754280999999999,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it does not cover any golden-answer facts. It is faithful in the sense that it does not hallucinate, but it is incomplete and non-specific.",
-        "judge_usage": {
-          "prompt_tokens": 1073,
-          "completion_tokens": 377,
-          "total_tokens": 1450
-        },
-        "latency_seconds": 0.6114886249999998,
         "retrieved_context_chars": 0
       },
       "papermem": {
@@ -958,16 +904,16 @@
         "recall": 1.0,
         "faithfulness": 1.0,
         "completeness": 1.0,
-        "specificity": 2.0,
+        "specificity": 1.0,
         "overall": 1.0,
-        "rationale": "Mostly misses the golden answer. It does not identify the key survey limitations of black-box nature and inflexible finite search, nor the EA benefits of black-box optimization, iterative optimization, and flexible global exploration. It introduces largely unsupported details about high dimensionality, constraints, evaluation focus, optimization trajectories, and infeasibility diagnosis.",
+        "rationale": "Does not provide the paper's stated definition. It substitutes a generic description about breakthroughs and performance scaling, omitting the key definitional elements: Transformer-based architecture, large parameter count, massive-dataset pretraining, and self-/semi-supervised learning.",
         "judge_usage": {
-          "prompt_tokens": 1073,
-          "completion_tokens": 377,
-          "total_tokens": 1450
+          "prompt_tokens": 574,
+          "completion_tokens": 322,
+          "total_tokens": 896
         },
-        "latency_seconds": 10.949395125000024,
-        "retrieved_context_chars": 7195
+        "latency_seconds": 9.738983000000005,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -982,11 +928,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on all key points: objectives (perplexity, latency, memory), evaluation backbones (GPT-2 and Transformer-XL), and output (estimated Pareto frontier). Minor unsupported extra detail about decoder-layer hyperparameters lowers faithfulness slightly.",
+        "rationale": "Matches the golden answer on all core points: objectives are perplexity, latency, and memory; evaluated on GPT-2 and Transformer-XL; output is an estimated Pareto frontier. Includes an extra claim about decoder-layer hyperparameters not present in the golden answer, so faithfulness is slightly reduced.",
         "judge_usage": {
-          "prompt_tokens": 662,
-          "completion_tokens": 337,
-          "total_tokens": 999
+          "prompt_tokens": 623,
+          "completion_tokens": 331,
+          "total_tokens": 954
         },
         "latency_seconds": 2.1277713749999982,
         "retrieved_context_chars": 13998
@@ -998,51 +944,51 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer and therefore misses all key facts. However, it does not introduce incorrect claims; it simply states uncertainty.",
         "judge_usage": {
-          "prompt_tokens": 662,
-          "completion_tokens": 337,
-          "total_tokens": 999
+          "prompt_tokens": 623,
+          "completion_tokens": 331,
+          "total_tokens": 954
         },
         "latency_seconds": 0.6119070829999984,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Mostly incorrect versus the golden answer: it gives the wrong optimization objective, wrong evaluation backbones, and wrong output type. It only partially aligns by discussing architecture search, but the answer contains multiple unsupported and contradictory claims.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Fully matches the golden answer: identifies the three optimized objectives, the two evaluated backbones, and the Pareto frontier estimation output. Concise and paper-specific with no unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 662,
-          "completion_tokens": 337,
-          "total_tokens": 999
+          "prompt_tokens": 623,
+          "completion_tokens": 331,
+          "total_tokens": 954
         },
-        "latency_seconds": 6.244221583000012,
-        "retrieved_context_chars": 7198
+        "latency_seconds": 9.053382916999993,
+        "retrieved_context_chars": 14000
       }
     }
   },
   {
-    "question_id": "q_2401.10034_05",
+    "question_id": "q_2401.10034_03",
     "paper_id": "2401.10034",
     "scores": {
       "rag_gpt4o_mini": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "The golden answer says the key challenges are high time consumption and limited generalization ability, with future work aimed at addressing these and finding more effective architecture search methods. This answer mostly discusses other broad challenges and does not mention high time consumption. It only loosely overlaps via generalization. It adds many unsupported details not present in the golden answer, so faithfulness is low.",
+        "accuracy": 3.0,
+        "recall": 4.0,
+        "faithfulness": 2.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 3.0,
+        "rationale": "Captures the key limitations of black-box nature and inflexible search, and mentions flexible global search by EAs. It partially matches the gold by implying EAs help with black-box optimization, but misses the explicit points about finite search capability and iterative optimization rather than one-shot search. It also adds unsupported claims about leveraging domain knowledge, prompt engineering, and generating optimization algorithms.",
         "judge_usage": {
-          "prompt_tokens": 1171,
-          "completion_tokens": 374,
-          "total_tokens": 1545
+          "prompt_tokens": 932,
+          "completion_tokens": 379,
+          "total_tokens": 1311
         },
-        "latency_seconds": 9.530347541000001,
+        "latency_seconds": 2.754280999999999,
         "retrieved_context_chars": 13998
       },
       "bare_gpt4o_mini": {
@@ -1052,30 +998,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The system does not answer the question, so it has no accuracy, recall, completeness, or specificity. However, it does not introduce false claims and is fully faithful in acknowledging uncertainty.",
+        "rationale": "Provides no substantive answer, so it misses all key facts. However, it does not hallucinate or contradict the gold answer.",
         "judge_usage": {
-          "prompt_tokens": 1171,
-          "completion_tokens": 374,
-          "total_tokens": 1545
+          "prompt_tokens": 932,
+          "completion_tokens": 379,
+          "total_tokens": 1311
         },
-        "latency_seconds": 0.8633613340000004,
+        "latency_seconds": 0.6114886249999998,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "The answer misses the main golden points of high time consumption and limited generalization ability. It gives several alternative challenges and directions, some only loosely related. Because it omits the central answer and adds unsupported specifics, accuracy, recall, faithfulness, and completeness are low.",
+        "accuracy": 2.0,
+        "recall": 2.0,
+        "faithfulness": 2.0,
+        "completeness": 2.0,
+        "specificity": 3.0,
+        "overall": 2.0,
+        "rationale": "Includes one relevant EA-side point about black-box settings and flexible global search, but the stated LLM limitations mostly do not match the gold answer. It misses the black-box nature and finite/inflexible search framing, as well as iterative optimization versus one-shot search. It also introduces unsupported additions about evaluation focus, context limits, and algorithm-level refinement.",
         "judge_usage": {
-          "prompt_tokens": 1171,
-          "completion_tokens": 374,
-          "total_tokens": 1545
+          "prompt_tokens": 932,
+          "completion_tokens": 379,
+          "total_tokens": 1311
         },
-        "latency_seconds": 6.528671916999997,
-        "retrieved_context_chars": 6984
+        "latency_seconds": 13.526958500000006,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1090,11 +1036,11 @@
         "completeness": 4.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies the three highlighted limitations and names RAG, chain-of-thought, and PAL. It misses the paper-specific frameworks ReAct and LangChain, replacing them with a vaguer 'integration with external applications' claim and adding an unsupported customer-service example.",
+        "rationale": "Correctly identifies the three limitations and includes RAG, chain-of-thought, and PAL. It misses the specific frameworks ReAct and LangChain from the golden answer, replacing them with a vaguer 'integration with external applications,' and adds an unsupported example about customer service bots.",
         "judge_usage": {
-          "prompt_tokens": 942,
-          "completion_tokens": 367,
-          "total_tokens": 1309
+          "prompt_tokens": 1039,
+          "completion_tokens": 366,
+          "total_tokens": 1405
         },
         "latency_seconds": 3.2316899170000006,
         "retrieved_context_chars": 13998
@@ -1106,30 +1052,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no paper content, so it does not answer the question. However, it does not introduce false paper-specific claims, so faithfulness is high despite zero recall and completeness.",
+        "rationale": "Provides no substantive answer to the question, so it does not cover any of the golden-answer content. However, it does not introduce incorrect paper-specific claims.",
         "judge_usage": {
-          "prompt_tokens": 942,
-          "completion_tokens": 367,
-          "total_tokens": 1309
+          "prompt_tokens": 1039,
+          "completion_tokens": 366,
+          "total_tokens": 1405
         },
         "latency_seconds": 0.6998414170000018,
         "retrieved_context_chars": 0
       },
       "papermem": {
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly captures the three limitations and names RAG, PAL, ReAct, and LangChain. It omits chain-of-thought prompting, and its description of LangChain as mainly supporting structured prompts is weaker than the golden answer's emphasis on structured reasoning, action planning, and complex task execution, but overall it is close and paper-specific.",
+        "judge_usage": {
+          "prompt_tokens": 1039,
+          "completion_tokens": 366,
+          "total_tokens": 1405
+        },
+        "latency_seconds": 7.718009084000002,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2401.10034_05",
+    "paper_id": "2401.10034",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 1.0,
+        "recall": 1.0,
+        "faithfulness": 1.0,
+        "completeness": 2.0,
+        "specificity": 2.0,
+        "overall": 1.0,
+        "rationale": "Mostly does not match the golden answer. It misses the key named challenges of high time consumption and limited generalization ability, and instead gives a broader list of other issues. It does mention generalizability in a different form and future exploration of better approaches, but adds many unsupported details not present in the gold.",
+        "judge_usage": {
+          "prompt_tokens": 1079,
+          "completion_tokens": 365,
+          "total_tokens": 1444
+        },
+        "latency_seconds": 9.530347541000001,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 0.0,
+        "faithfulness": 5.0,
         "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "Answer is largely unrelated to the golden answer: it discusses catastrophic forgetting, alignment, RLHF, reinforced self-training, and PPO instead of temporal cutoffs, math inaccuracies, hallucinations, RAG, chain-of-thought, PAL, ReAct, and LangChain. It is specific, but specifically wrong and unsupported relative to the paper answer.",
+        "specificity": 0.0,
+        "overall": 1.0,
+        "rationale": "Provides no substantive answer, so it does not cover the gold content. However, it does not hallucinate or contradict the gold; it simply abstains.",
         "judge_usage": {
-          "prompt_tokens": 942,
-          "completion_tokens": 367,
-          "total_tokens": 1309
+          "prompt_tokens": 1079,
+          "completion_tokens": 365,
+          "total_tokens": 1444
         },
-        "latency_seconds": 6.914088665999998,
-        "retrieved_context_chars": 6907
+        "latency_seconds": 0.8633613340000004,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 4.0,
+        "recall": 5.0,
+        "faithfulness": 3.0,
+        "completeness": 5.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly includes the two key challenges from the golden answer: high time consumption and limited generalization ability. It also states that future work should improve methods, which aligns with the gold. However, it adds a long list of extra future directions that are not supported by the golden answer, reducing faithfulness somewhat.",
+        "judge_usage": {
+          "prompt_tokens": 1079,
+          "completion_tokens": 365,
+          "total_tokens": 1444
+        },
+        "latency_seconds": 9.068547832999997,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1144,11 +1144,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer closely: DDP replicates the full model on each GPU, requires weights/parameters/gradients/optimizer states to fit on one GPU, and FSDP shards states across GPUs without redundancy. It also correctly states FSDP is needed when the model exceeds single-GPU memory. Minor unsupported additions about out-of-memory errors and 16-bit precision slightly reduce faithfulness.",
+        "rationale": "Matches the golden answer closely: DDP fully replicates the model and requires weights, gradients, parameters, and optimizer states to fit on one GPU; FSDP shards states across GPUs; FSDP is needed when the model exceeds single-GPU memory. Minor unsupported additions include mention of out-of-memory errors and 16-bit precision.",
         "judge_usage": {
-          "prompt_tokens": 912,
-          "completion_tokens": 410,
-          "total_tokens": 1322
+          "prompt_tokens": 895,
+          "completion_tokens": 376,
+          "total_tokens": 1271
         },
         "latency_seconds": 3.760179292,
         "retrieved_context_chars": 13998
@@ -1160,30 +1160,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts and is incomplete and nonspecific. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer, so it misses all key facts from the golden answer. However, it is faithful in the sense that it does not hallucinate or contradict the paper.",
         "judge_usage": {
-          "prompt_tokens": 912,
-          "completion_tokens": 410,
-          "total_tokens": 1322
+          "prompt_tokens": 895,
+          "completion_tokens": 376,
+          "total_tokens": 1271
         },
         "latency_seconds": 2.6243198329999977,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 4.0,
-        "recall": 4.0,
-        "faithfulness": 3.0,
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
         "completeness": 5.0,
-        "specificity": 4.0,
-        "overall": 4.0,
-        "rationale": "Captures the core distinction that DDP replicates the model per GPU while FSDP shards across GPUs, and correctly says FSDP is needed once the model exceeds single-GPU memory. It omits some precise details from the golden answer, especially gradients and optimizer states fitting in memory. The phrase 'as inferred from the evidence' and some generalized wording make it slightly less faithful and specific.",
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Covers the core distinctions accurately: DDP replicates the full model and requires all relevant states to fit in one GPU's memory, while FSDP shards model states without redundancy and is necessary once the model exceeds single-GPU memory. Small unsupported additions include increased communication overhead and mention of 16-bit precision.",
         "judge_usage": {
-          "prompt_tokens": 912,
-          "completion_tokens": 410,
-          "total_tokens": 1322
+          "prompt_tokens": 895,
+          "completion_tokens": 376,
+          "total_tokens": 1271
         },
-        "latency_seconds": 6.854076874999919,
-        "retrieved_context_chars": 6189
+        "latency_seconds": 9.615381458000002,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1194,15 +1194,15 @@
       "rag_gpt4o_mini": {
         "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 5.0,
+        "faithfulness": 4.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on all three stages: Stage 1 shards optimizer states with up to 4x reduction; Stage 2 shards optimizer states plus gradients with up to 8x reduction; Stage 3 shards parameters, gradients, and optimizer states with linear scaling and an example reduction of 64x. Includes the key paper-specific details.",
+        "rationale": "Matches the golden answer on all three stages: Stage 1 shards optimizer states (up to 4x), Stage 2 shards optimizer states plus gradients (up to 8x with Stage 1), and Stage 3 shards parameters, gradients, and optimizer states with linear scaling and an example factor of 64. Minor extra explanatory detail about optimizer-state size is not in the golden answer, so faithfulness is slightly lower.",
         "judge_usage": {
-          "prompt_tokens": 1108,
-          "completion_tokens": 416,
-          "total_tokens": 1524
+          "prompt_tokens": 977,
+          "completion_tokens": 411,
+          "total_tokens": 1388
         },
         "latency_seconds": 2.7812929169999983,
         "retrieved_context_chars": 13998
@@ -1214,84 +1214,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts and lacks completeness and specificity. It does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer to the question, so it misses all required facts and lacks completeness and specificity. However, it does not introduce incorrect paper-specific claims, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 1108,
-          "completion_tokens": 416,
-          "total_tokens": 1524
+          "prompt_tokens": 977,
+          "completion_tokens": 411,
+          "total_tokens": 1388
         },
         "latency_seconds": 0.7552137919999993,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 1.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Incorrectly assigns the sharded components to the stages: the golden answer says Stage 1 shards optimizer states, Stage 2 adds gradients, and Stage 3 includes parameters as well, but this answer instead maps Stage 1 to parameter sharding, Stage 2 to gradient sharding plus parameters, and Stage 3 to optimizer-state sharding. It also omits the required memory-reduction figures (4x, 8x, 64x), so recall and completeness are very low.",
-        "judge_usage": {
-          "prompt_tokens": 1108,
-          "completion_tokens": 416,
-          "total_tokens": 1524
-        },
-        "latency_seconds": 10.555210624999972,
-        "retrieved_context_chars": 6638
-      }
-    }
-  },
-  {
-    "question_id": "q_2407.12036_04",
-    "paper_id": "2407.12036",
-    "scores": {
-      "rag_gpt4o_mini": {
         "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 5.0,
+        "faithfulness": 4.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer closely: LoRA is described via low-rank decomposition for strong parameter reduction without performance loss on limited hardware; prompt tuning uses soft prompts with very few added parameters, is simple/scalable, and preserves pre-trained knowledge; future work includes hybrid LoRA+prompt tuning, broader evaluation across architectures/domains, and adaptive PEFT based on task complexity.",
+        "rationale": "Accurately reproduces the three ZeRO stages and the memory-reduction figures from the golden answer: optimizer states only (4x), optimizer states plus gradients (8x), and all components including parameters (linear scaling, example 64x). As with the best answer, there is a small amount of extra explanation not required by the golden answer, so faithfulness is slightly reduced.",
         "judge_usage": {
-          "prompt_tokens": 1170,
-          "completion_tokens": 408,
-          "total_tokens": 1578
+          "prompt_tokens": 977,
+          "completion_tokens": 411,
+          "total_tokens": 1388
         },
-        "latency_seconds": 5.392144791999996,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not hallucinate or contradict the golden answer.",
-        "judge_usage": {
-          "prompt_tokens": 1170,
-          "completion_tokens": 408,
-          "total_tokens": 1578
-        },
-        "latency_seconds": 1.557052917,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 3.0,
-        "recall": 3.0,
-        "faithfulness": 2.0,
-        "completeness": 3.0,
-        "specificity": 2.0,
-        "overall": 3.0,
-        "rationale": "Gets the main idea for LoRA and mentions hybrid methods as future work, but the prompt-tuning characterization is only partially aligned with the golden answer. It omits important specifics such as soft prompts, very few additional parameters, scalability for large models, preservation of pre-trained knowledge, broader evaluation across architectures/domains, and adaptive PEFT. It also adds unsupported claims like maintaining or enhancing performance across various tasks and emphasizes quick adaptation without clear grounding in the golden answer.",
-        "judge_usage": {
-          "prompt_tokens": 1170,
-          "completion_tokens": 408,
-          "total_tokens": 1578
-        },
-        "latency_seconds": 8.378069167000035,
-        "retrieved_context_chars": 6923
+        "latency_seconds": 9.591027582999999,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1306,11 +1252,11 @@
         "completeness": 5.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies reward hacking and KL divergence, which are the key points in the golden answer. It also answers both parts of the question. However, it adds unsupported claims about computational costs and PPO trust-region stability that are not in the golden answer, reducing faithfulness.",
+        "rationale": "Correctly identifies reward hacking and KL divergence, which are the key points in the golden answer. However, it adds unsupported claims about computational costs and PPO trust-region stabilization that are not in the golden answer, reducing faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 945,
-          "completion_tokens": 361,
-          "total_tokens": 1306
+          "prompt_tokens": 785,
+          "completion_tokens": 332,
+          "total_tokens": 1117
         },
         "latency_seconds": 3.3727645420000023,
         "retrieved_context_chars": 13998
@@ -1322,30 +1268,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts from the golden answer. It is faithful in the sense that it does not hallucinate, but it is entirely incomplete and non-specific.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. It is faithful in the sense that it does not hallucinate, but it has no useful coverage.",
         "judge_usage": {
-          "prompt_tokens": 945,
-          "completion_tokens": 361,
-          "total_tokens": 1306
+          "prompt_tokens": 785,
+          "completion_tokens": 332,
+          "total_tokens": 1117
         },
         "latency_seconds": 0.8958804580000006,
         "retrieved_context_chars": 0
       },
       "papermem": {
+        "accuracy": 4.0,
+        "recall": 5.0,
+        "faithfulness": 3.0,
+        "completeness": 5.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly includes reward hacking and KL divergence, covering the main facts from the golden answer. But it also introduces unsupported extra details about computational costs and PPO trust-region behavior, which lowers faithfulness.",
+        "judge_usage": {
+          "prompt_tokens": 785,
+          "completion_tokens": 332,
+          "total_tokens": 1117
+        },
+        "latency_seconds": 5.395335665999994,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2407.12036_04",
+    "paper_id": "2407.12036",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer closely: LoRA is described as low-rank decomposition for strong parameter reduction without performance loss on limited hardware, and prompt tuning as soft prompts with few added parameters, scalable, simple, and preserving pretrained knowledge. It also includes all listed future directions: hybrid LoRA+prompt methods, broader evaluation across architectures/domains, and adaptive PEFT based on task complexity.",
+        "judge_usage": {
+          "prompt_tokens": 1067,
+          "completion_tokens": 386,
+          "total_tokens": 1453
+        },
+        "latency_seconds": 5.392144791999996,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
+        "faithfulness": 5.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the golden-answer facts: it misses reward hacking and KL divergence. Instead, it introduces unrelated claims about catastrophic forgetting, misuse safeguards, and negative-aware reformatting, which are unsupported relative to the golden answer. It attempts to answer both parts, but the content is largely incorrect.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 945,
-          "completion_tokens": 361,
-          "total_tokens": 1306
+          "prompt_tokens": 1067,
+          "completion_tokens": 386,
+          "total_tokens": 1453
         },
-        "latency_seconds": 8.930263666999963,
-        "retrieved_context_chars": 7089
+        "latency_seconds": 1.557052917,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 3.0,
+        "recall": 3.0,
+        "faithfulness": 4.0,
+        "completeness": 3.0,
+        "specificity": 3.0,
+        "overall": 3.0,
+        "rationale": "Correctly characterizes LoRA and includes the future directions about hybrid methods, broader evaluation, and adaptive PEFT. However, it omits the golden answer's specific characterization of prompt tuning itself (soft prompts, very few parameters, simple/scalable, preserving pretrained knowledge), so recall and completeness are only partial.",
+        "judge_usage": {
+          "prompt_tokens": 1067,
+          "completion_tokens": 386,
+          "total_tokens": 1453
+        },
+        "latency_seconds": 13.104353958999994,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1360,11 +1360,11 @@
         "completeness": 4.0,
         "specificity": 5.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies the four main stages and mostly matches the purpose of each: CPT for reducing knowledge inconsistency, full-parameter SFT for general medical knowledge, preference optimization for humanistic pediatrician-like responses, and secondary SFT with universal-specific experts for resolving generalist-vs-pediatric conflicts. However, it adds an unsupported fifth stage, 'Progressive Instruction Reconstruction Rule,' which is not one of the four main stages in the golden answer, lowering faithfulness and completeness.",
+        "rationale": "Covers all four main stages and largely matches the purpose of each stage, using paper-specific terms like hybrid instruction, DFPO, and mixture of universal-specific experts via LoRA. However, it incorrectly adds a fifth stage (Progressive Instruction Reconstruction Rule), which is not part of the golden answer, lowering faithfulness and completeness.",
         "judge_usage": {
-          "prompt_tokens": 1180,
-          "completion_tokens": 444,
-          "total_tokens": 1624
+          "prompt_tokens": 1025,
+          "completion_tokens": 375,
+          "total_tokens": 1400
         },
         "latency_seconds": 5.5511201670000005,
         "retrieved_context_chars": 13998
@@ -1376,30 +1376,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question and provides none of the required stages or their purposes. It is faithful in the sense that it does not hallucinate content, but it has no recall, completeness, or paper-specific detail.",
+        "rationale": "Provides no substantive answer to the question, so it misses all key facts and lacks completeness and specificity. It is faithful in the sense that it does not hallucinate unsupported content.",
         "judge_usage": {
-          "prompt_tokens": 1180,
-          "completion_tokens": 444,
-          "total_tokens": 1624
+          "prompt_tokens": 1025,
+          "completion_tokens": 375,
+          "total_tokens": 1400
         },
         "latency_seconds": 1.4618912919999971,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Largely fails to reproduce the paper's four-stage pipeline. It mentions continuous pre-training, but misses full-parameter SFT, DFPO-based preference alignment, and parameter-efficient secondary SFT with LoRA and universal-specific experts as defined in the golden answer. It instead introduces unsupported stages like data collection/preprocessing, instruction refinement, and targeted improvements, and explicitly says it is inferring from incomplete evidence, making the answer weak in accuracy, recall, and faithfulness.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies the four main stages and captures the main problem addressed by each at a high level. It omits some important specifics from the golden answer, such as full-parameter SFT, DFPO by name, robustness, and LoRA, so recall and specificity are not perfect, but it stays mostly faithful.",
         "judge_usage": {
-          "prompt_tokens": 1180,
-          "completion_tokens": 444,
-          "total_tokens": 1624
+          "prompt_tokens": 1025,
+          "completion_tokens": 375,
+          "total_tokens": 1400
         },
-        "latency_seconds": 9.436967915999958,
-        "retrieved_context_chars": 6637
+        "latency_seconds": 14.270760584000001,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1410,15 +1410,15 @@
       "rag_gpt4o_mini": {
         "accuracy": 4.0,
         "recall": 5.0,
-        "faithfulness": 3.0,
+        "faithfulness": 4.0,
         "completeness": 5.0,
         "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Covers the core facts well: PedCorpus is a multi-task pediatric instruction dataset built from pediatric textbooks, guidelines, knowledge graphs, real doctor-patient conversations, distilled data, and is over 300,000 instructions with single-turn and multi-turn conversations. It is highly specific and answers all parts. However, it adds many extra quantitative details not present in the golden answer, including component counts and sizes, which are unsupported relative to the reference and slightly reduce faithfulness.",
+        "overall": 5.0,
+        "rationale": "Covers the key golden-answer points: PedCorpus is constructed from pediatric textbooks, guidelines, knowledge graphs, general/distilled medical data, and authentic doctor-patient conversations, and is over 300,000 instructions spanning single-turn and multi-turn conversations. It adds many paper-specific details and counts. Minor deductions because some added details are not required by the golden answer and the wording around construction/training phases goes beyond the core reference.",
         "judge_usage": {
-          "prompt_tokens": 891,
-          "completion_tokens": 400,
-          "total_tokens": 1291
+          "prompt_tokens": 949,
+          "completion_tokens": 409,
+          "total_tokens": 1358
         },
         "latency_seconds": 3.149361458999998,
         "retrieved_context_chars": 13998
@@ -1430,30 +1430,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested information, so accuracy, recall, completeness, and specificity are effectively absent. It is faithful in the sense that it does not hallucinate or contradict the golden answer, but it fails to answer the question.",
+        "rationale": "Does not answer the question and provides none of the key facts from the golden answer. However, it does not hallucinate content, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 891,
-          "completion_tokens": 400,
-          "total_tokens": 1291
+          "prompt_tokens": 949,
+          "completion_tokens": 409,
+          "total_tokens": 1358
         },
         "latency_seconds": 1.428529625000003,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 0.2,
-        "rationale": "Fails to provide the golden-answer facts and instead gives generic speculation about possible sources. The answer is incomplete, non-specific, and includes unsupported additions ('academic papers, datasets, and other textual resources') not grounded in the golden answer, lowering faithfulness.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 5.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies the main source types and the approximate scale of over 300,000 instructions, with detailed component counts. It is specific and mostly accurate. Small deductions because it omits explicit mention of single-turn/multi-turn conversations and the role of generalist healthcare/GPT-4-distilled data in improving fluency, faithfulness, and extensibility, and it adds an unnecessary MB size detail.",
         "judge_usage": {
-          "prompt_tokens": 891,
-          "completion_tokens": 400,
-          "total_tokens": 1291
+          "prompt_tokens": 949,
+          "completion_tokens": 409,
+          "total_tokens": 1358
         },
-        "latency_seconds": 5.902694499999939,
-        "retrieved_context_chars": 6600
+        "latency_seconds": 6.527852624999994,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1468,11 +1468,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies Baichuan2-Base and the reason that it showed comprehensive potential among similar Chinese LLMs. It is complete and specific. However, it adds extra claims about HuatuoGPT-II, Zhongjing, insufficiency in detailed/accurate medical knowledge, and outperforming current Chinese medical LLMs that are not supported by the golden answer, lowering faithfulness.",
+        "rationale": "Correctly identifies Baichuan2-Base and the stated reason that it showed comprehensive potential among similar contenders. However, it adds unsupported comparative claims about HuatuoGPT-II, Zhongjing, and broader performance claims not present in the golden answer, which lowers faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 787,
-          "completion_tokens": 389,
-          "total_tokens": 1176
+          "prompt_tokens": 635,
+          "completion_tokens": 341,
+          "total_tokens": 976
         },
         "latency_seconds": 1.730096207999999,
         "retrieved_context_chars": 13998
@@ -1484,30 +1484,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested paper answer, so accuracy, recall, completeness, and specificity are absent. It is nevertheless faithful in that it does not hallucinate content.",
+        "rationale": "Does not provide the requested information, so accuracy, recall, completeness, and specificity are absent. It is still faithful in that it avoids hallucinating and explicitly states uncertainty.",
         "judge_usage": {
-          "prompt_tokens": 787,
-          "completion_tokens": 389,
-          "total_tokens": 1176
+          "prompt_tokens": 635,
+          "completion_tokens": 341,
+          "total_tokens": 976
         },
         "latency_seconds": 0.6435905419999983,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 0.6,
-        "rationale": "Incorrectly says PediatricsGPT is built on GPT-4, whereas the golden answer says Baichuan2-Base. The stated reasons for choosing it are also unsupported and do not match the golden answer's 'comprehensive potential among similar Chinese LLM contenders.' It attempts to answer both parts, but with incorrect and hallucinated paper details.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer exactly: it names Baichuan2-Base and gives the correct reason, namely its comprehensive potential among similar contenders. The response is concise, complete, and paper-specific without unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 787,
-          "completion_tokens": 389,
-          "total_tokens": 1176
+          "prompt_tokens": 635,
+          "completion_tokens": 341,
+          "total_tokens": 976
         },
-        "latency_seconds": 6.3003776659999176,
-        "retrieved_context_chars": 6941
+        "latency_seconds": 8.708688082999998,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1522,46 +1522,46 @@
         "completeness": 3.0,
         "specificity": 4.0,
         "overall": 3.0,
-        "rationale": "Captures that PediatricsGPT outperforms prior Chinese medical LLMs, but it incorrectly frames the comparison to GPT-3.5-turbo as outright outperforming it, whereas the golden answer says competitive performance. It also adds several unsupported benchmark/task details not required by the golden answer and ends with a contradictory note saying no specific comparison with GPT-3.5-turbo was provided.",
+        "rationale": "Captures the main idea that PediatricsGPT outperforms prior Chinese medical LLMs, but it incorrectly states superiority over GPT-3.5-turbo, whereas the golden answer says performance is competitive relative to GPT-3.5-turbo. It also adds several unsupported benchmark details and ends with a contradictory note saying no specific comparison with GPT-3.5-turbo was provided. Specificity is high, but faithfulness is reduced by unsupported additions and contradiction.",
         "judge_usage": {
-          "prompt_tokens": 835,
-          "completion_tokens": 404,
-          "total_tokens": 1239
+          "prompt_tokens": 762,
+          "completion_tokens": 397,
+          "total_tokens": 1159
         },
         "latency_seconds": 2.7611939590000034,
         "retrieved_context_chars": 13998
       },
       "bare_gpt4o_mini": {
-        "accuracy": 1.0,
+        "accuracy": 0.0,
         "recall": 0.0,
         "faithfulness": 5.0,
-        "completeness": 1.0,
+        "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The answer is a non-answer: it does not provide the paper's claim, so it misses essentially all key facts. However, it does not hallucinate or contradict the golden answer.",
+        "rationale": "Does not answer the question and provides no relevant content from the golden answer. However, it does not introduce fabricated paper details, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 835,
-          "completion_tokens": 404,
-          "total_tokens": 1239
+          "prompt_tokens": 762,
+          "completion_tokens": 397,
+          "total_tokens": 1159
         },
         "latency_seconds": 0.6699137080000028,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 4.0,
-        "recall": 3.0,
-        "faithfulness": 4.0,
-        "completeness": 3.0,
-        "specificity": 2.0,
-        "overall": 3.0,
-        "rationale": "Correctly states that PediatricsGPT is competitive with GPT-3.5-turbo and better than prior Chinese medical LLMs in general. But it omits the golden answer's stronger claim that it consistently outperforms previous/open-source Chinese medical LLMs and baselines on pediatric and public benchmarks, so coverage and completeness are only partial. It stays mostly faithful and avoids major unsupported specifics.",
+        "accuracy": 5.0,
+        "recall": 4.0,
+        "faithfulness": 5.0,
+        "completeness": 4.0,
+        "specificity": 3.0,
+        "overall": 4.0,
+        "rationale": "Matches the core claim in the golden answer: PediatricsGPT outperforms previous Chinese medical LLMs and is competitive with GPT-3.5-turbo. It is faithful and concise, though it omits the mention of public and pediatric benchmarks/baselines and is somewhat less specific than the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 835,
-          "completion_tokens": 404,
-          "total_tokens": 1239
+          "prompt_tokens": 762,
+          "completion_tokens": 397,
+          "total_tokens": 1159
         },
-        "latency_seconds": 6.813441375000025,
-        "retrieved_context_chars": 7055
+        "latency_seconds": 4.934174667000008,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1570,17 +1570,17 @@
     "paper_id": "2405.19266v4",
     "scores": {
       "rag_gpt4o_mini": {
-        "accuracy": 4.0,
+        "accuracy": 5.0,
         "recall": 5.0,
         "faithfulness": 4.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Covers both main limitation categories from the golden answer: inadequate pediatric instruction data/construction and training-procedure issues involving SFT and RLHF. It includes strong paper-specific details such as generic rephrasing, doctor-like dialogues, weak multitask coverage, hallucination, and actor-critic instability/online sampling bias. Minor unsupported additions or wording shifts appear, such as 'excessive role-playing' and some repetition, so faithfulness is slightly reduced.",
+        "rationale": "Covers both main shortcomings from the golden answer: inadequate pediatric instruction data and limitations of prior training procedures. It includes key details such as generic medical rephrasing/doctor-like dialogues, failure to support real-world multi-task healthcare, reduced generalization, hallucinations, reliance on SFT, ignored discrepancy between inherent and injected knowledge, and RLHF issues like actor-critic instability and online sampling bias. Minor unsupported additions such as 'excessive role-playing' and some repetition slightly reduce faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 402,
-          "total_tokens": 1514
+          "prompt_tokens": 1240,
+          "completion_tokens": 460,
+          "total_tokens": 1700
         },
         "latency_seconds": 6.285694499999998,
         "retrieved_context_chars": 13998
@@ -1592,30 +1592,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question and provides no relevant content from the paper, so accuracy, recall, completeness, and specificity are all absent. However, it does not invent paper details or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Does not answer the question and provides none of the paper-specific shortcomings from the golden answer. However, it does not hallucinate content about the paper, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 402,
-          "total_tokens": 1514
+          "prompt_tokens": 1240,
+          "completion_tokens": 460,
+          "total_tokens": 1700
         },
         "latency_seconds": 1.7448457079999997,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 4.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Fails to provide the paper's stated shortcomings and instead says the evidence is insufficient. This yields no substantive recall or completeness. It is mostly faithful because it avoids hallucinating specifics, though the claim that the evidence does not provide details is unsupported relative to the golden answer.",
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 3.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies the main data-related limitations: lack of pediatric specialization, generic rephrasing/doctor-like dialogues, failure of simple instruction construction to cover multi-task healthcare, and resulting generalization/hallucination issues. It also mentions overreliance on SFT and the mismatch between inherent and external knowledge. However, it omits the golden answer's RLHF-specific limitations (actor-critic instability and online sampling bias) and adds unsupported phrasing like 'excessive role-playing' and 'incompetence in real-world applications,' which lowers faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 402,
-          "total_tokens": 1514
+          "prompt_tokens": 1240,
+          "completion_tokens": 460,
+          "total_tokens": 1700
         },
-        "latency_seconds": 5.775369708000085,
-        "retrieved_context_chars": 7199
+        "latency_seconds": 13.439528625000008,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1630,11 +1630,11 @@
         "completeness": 4.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies the two targeted limitations and the sequential low-rank parameter update. It captures the compression-loss misalignment and post-truncation update issue well. However, it replaces the paper-specific term 'truncation-aware data whitening' with the vaguer 'truncation-aware SVD,' which lowers specificity and exact accuracy.",
+        "rationale": "Captures both main limitations and the sequential low-rank parameter update correctly. However, it replaces the paper-specific component 'truncation-aware data whitening' with the less precise and partly incorrect 'truncation-aware SVD,' so it misses an important specific detail.",
         "judge_usage": {
-          "prompt_tokens": 1063,
-          "completion_tokens": 384,
-          "total_tokens": 1447
+          "prompt_tokens": 948,
+          "completion_tokens": 339,
+          "total_tokens": 1287
         },
         "latency_seconds": 2.083966750000002,
         "retrieved_context_chars": 13998
@@ -1646,84 +1646,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. It is faithful in the sense that it does not hallucinate or contradict the golden answer.",
+        "rationale": "Provides no substantive answer to the question. It does not contain incorrect paper claims, but it fails to cover any of the requested limitations or design components.",
         "judge_usage": {
-          "prompt_tokens": 1063,
-          "completion_tokens": 384,
-          "total_tokens": 1447
+          "prompt_tokens": 948,
+          "completion_tokens": 339,
+          "total_tokens": 1287
         },
         "latency_seconds": 0.7978273749999971,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Does not identify the two limitations from the golden answer. Instead, it substitutes different issues (accuracy degradation at high compression and long compression time) and different components ('two-round SVD decomposition' and streamlined process), which are unsupported relative to the golden answer. While somewhat paper-specific in tone, it is largely inaccurate and unfaithful to the target answer.",
-        "judge_usage": {
-          "prompt_tokens": 1063,
-          "completion_tokens": 384,
-          "total_tokens": 1447
-        },
-        "latency_seconds": 9.41713387499999,
-        "retrieved_context_chars": 7011
-      }
-    }
-  },
-  {
-    "question_id": "q_2403.07378v5_03",
-    "paper_id": "2403.07378v5",
-    "scores": {
-      "rag_gpt4o_mini": {
-        "accuracy": 4.0,
+        "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 3.0,
+        "faithfulness": 5.0,
         "completeness": 5.0,
         "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Covers the key golden facts: 10 datasets, seven models, three families (LLaMA, OPT, Mistral), and three scales (7B, 13B, 30B). However, it adds unsupported specifics about the exact model list and dataset breakdown, and includes irrelevant hardware details not asked for.",
+        "overall": 5.0,
+        "rationale": "Matches the golden answer closely: identifies the truncation/compression-loss misalignment and missing post-truncation parameter updates, and names the corresponding solutions as truncation-aware data whitening and parameter update with sequential low-rank approximation.",
         "judge_usage": {
-          "prompt_tokens": 987,
-          "completion_tokens": 386,
-          "total_tokens": 1373
+          "prompt_tokens": 948,
+          "completion_tokens": 339,
+          "total_tokens": 1287
         },
-        "latency_seconds": 6.381678000000001,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Does not provide the requested experimental coverage details, so it misses all key facts. It is faithful in that it does not hallucinate content, but it is entirely incomplete and non-specific.",
-        "judge_usage": {
-          "prompt_tokens": 987,
-          "completion_tokens": 386,
-          "total_tokens": 1373
-        },
-        "latency_seconds": 1.0049640409999938,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 2.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Provides only a fragmentary and largely off-target response. It mentions LLaMA-7B and WikiText-2 but misses the core golden answer of 10 datasets, seven models, three families, and scales 7B/13B/30B. It also adds unsupported claims about Chinese medical LLMs and ChatGPT comparisons, reducing faithfulness.",
-        "judge_usage": {
-          "prompt_tokens": 987,
-          "completion_tokens": 386,
-          "total_tokens": 1373
-        },
-        "latency_seconds": 6.747530708999989,
-        "retrieved_context_chars": 7197
+        "latency_seconds": 9.468676791999997,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1738,11 +1684,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on the definition Rw = 1 - ((d+n)r)/(dn), identifies the low-rank shapes, and correctly states compute is reduced to (1 - Rw) times the original, including the 50% example and complexity change from O(d^2 n) to O(d^2 r + rnd).",
+        "rationale": "Matches the golden answer on the formula Rw = 1 - ((d+n)r)/(dn), the conclusion that compute becomes (1 - Rw) times the original, and the example from O(d^2 n) to O(d^2 r + rnd) at 50% compression. It is fully paper-specific and adds no unsupported claims.",
         "judge_usage": {
-          "prompt_tokens": 1226,
-          "completion_tokens": 396,
-          "total_tokens": 1622
+          "prompt_tokens": 1133,
+          "completion_tokens": 388,
+          "total_tokens": 1521
         },
         "latency_seconds": 3.708955000000003,
         "retrieved_context_chars": 13998
@@ -1754,30 +1700,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not introduce incorrect or hallucinated content.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 1226,
-          "completion_tokens": 396,
-          "total_tokens": 1622
+          "prompt_tokens": 1133,
+          "completion_tokens": 388,
+          "total_tokens": 1521
         },
         "latency_seconds": 1.6705151669999978,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 3.0,
-        "recall": 3.0,
-        "faithfulness": 2.0,
-        "completeness": 3.0,
+        "accuracy": 5.0,
+        "recall": 4.0,
+        "faithfulness": 5.0,
+        "completeness": 4.0,
         "specificity": 4.0,
-        "overall": 3.0,
-        "rationale": "Correctly gives the compression-ratio formula, but the compute-complexity statement is incomplete/partly incorrect versus the golden answer: it says O(d^2 r + rn) instead of O(d^2 r + rnd), and it does not clearly state the key conclusion that compute becomes (1 - Rw) times the original. It is somewhat specific to the paper but includes unsupported general wording about notable decreases.",
+        "overall": 4.0,
+        "rationale": "Correctly gives the compression ratio formula and the main conclusion that compute is reduced to (1 - Rw) times the original, including the 50% example. It is slightly less complete and specific than the golden answer because it omits the explicit complexity transition from O(d^2 n) to O(d^2 r + rnd).",
         "judge_usage": {
-          "prompt_tokens": 1226,
-          "completion_tokens": 396,
-          "total_tokens": 1622
+          "prompt_tokens": 1133,
+          "completion_tokens": 388,
+          "total_tokens": 1521
         },
-        "latency_seconds": 7.301635666000038,
-        "retrieved_context_chars": 6882
+        "latency_seconds": 13.324355249999996,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2403.07378v5_03",
+    "paper_id": "2403.07378v5",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 4.0,
+        "recall": 5.0,
+        "faithfulness": 3.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 4.0,
+        "rationale": "Matches the golden answer on 10 datasets, seven models, three families, and the stated scales. It is very specific and covers all requested dimensions. However, it adds unsupported details such as a full dataset/model breakdown and hardware information, and some listed models/scales do not cleanly align with the golden phrasing, reducing faithfulness.",
+        "judge_usage": {
+          "prompt_tokens": 836,
+          "completion_tokens": 374,
+          "total_tokens": 1210
+        },
+        "latency_seconds": 6.381678000000001,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
+        "accuracy": 0.0,
+        "recall": 0.0,
+        "faithfulness": 5.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
+        "overall": 1.0,
+        "rationale": "Provides no substantive answer to the question, so it misses all key facts from the golden answer. It is faithful in the narrow sense that it does not hallucinate content, but it is incomplete and non-specific.",
+        "judge_usage": {
+          "prompt_tokens": 836,
+          "completion_tokens": 374,
+          "total_tokens": 1210
+        },
+        "latency_seconds": 1.0049640409999938,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Directly matches the golden answer: 10 datasets, seven models, three families (LLaMA, OPT, Mistral), and three scales (7B, 13B, 30B). It is concise, complete, faithful, and paper-specific.",
+        "judge_usage": {
+          "prompt_tokens": 836,
+          "completion_tokens": 374,
+          "total_tokens": 1210
+        },
+        "latency_seconds": 5.601361541999978,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1792,11 +1792,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly, including all three perplexity values (31.79, 80.23, 271) and the correct comparison that SVD-LLM with sequential LoRA fine-tuning performs best.",
+        "rationale": "Matches the golden answer exactly: 31.79 for SVD-LLM (SFT), compared against 80.23 for SVD-LLM (NFT) and 271 for ASVD (SFT), and correctly states the relative improvement.",
         "judge_usage": {
-          "prompt_tokens": 935,
-          "completion_tokens": 349,
-          "total_tokens": 1284
+          "prompt_tokens": 825,
+          "completion_tokens": 325,
+          "total_tokens": 1150
         },
         "latency_seconds": 4.252522333000002,
         "retrieved_context_chars": 13998
@@ -1808,30 +1808,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no answer to the question and includes none of the required perplexity values or comparisons. However, it does not introduce incorrect factual claims, so faithfulness is high despite zero recall and completeness.",
+        "rationale": "Does not provide the requested values or comparisons, so it fails on accuracy, recall, completeness, and specificity. However, it is faithful in that it does not hallucinate unsupported details.",
         "judge_usage": {
-          "prompt_tokens": 935,
-          "completion_tokens": 349,
-          "total_tokens": 1284
+          "prompt_tokens": 825,
+          "completion_tokens": 325,
+          "total_tokens": 1150
         },
         "latency_seconds": 1.3253738330000004,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 4.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Does not provide the needed perplexity values or the requested comparison, so it fails on accuracy, recall, and completeness. It is mostly cautious and avoids fabricating the numbers, but adds an unsupported claim about the source being part of an ICLR 2025 conference paper.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Fully consistent with the golden answer, giving all three perplexities exactly and the correct comparison at the specified 80% compression ratio.",
         "judge_usage": {
-          "prompt_tokens": 935,
-          "completion_tokens": 349,
-          "total_tokens": 1284
+          "prompt_tokens": 825,
+          "completion_tokens": 325,
+          "total_tokens": 1150
         },
-        "latency_seconds": 8.627904917000023,
-        "retrieved_context_chars": 6695
+        "latency_seconds": 9.070774459000006,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1843,14 +1843,14 @@
         "accuracy": 2.0,
         "recall": 2.0,
         "faithfulness": 2.0,
-        "completeness": 1.0,
+        "completeness": 2.0,
         "specificity": 2.0,
         "overall": 2.0,
-        "rationale": "It correctly identifies accuracy degradation at high compression ratios, but misses the two other explicit limitations in the golden answer: KV-cache latency overhead from reconstructing key/value states and low-quality generation such as repeated words. Its second and third points are vague or unsupported relative to the golden answer.",
+        "rationale": "Gets the first limitation mostly right (accuracy degradation at high compression ratios), but misses the two other explicit limitations from the golden answer: KV-cache latency overhead and low-quality/repetitive generation. It adds vague unsupported statements about practicality and 'realizing the potential' instead of the paper-specific points.",
         "judge_usage": {
-          "prompt_tokens": 899,
-          "completion_tokens": 356,
-          "total_tokens": 1255
+          "prompt_tokens": 829,
+          "completion_tokens": 357,
+          "total_tokens": 1186
         },
         "latency_seconds": 2.5971688340000014,
         "retrieved_context_chars": 13998
@@ -1862,84 +1862,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The system does not answer the question and provides none of the three limitations. However, it does not hallucinate or contradict the golden answer, so faithfulness is high despite zero useful coverage.",
+        "rationale": "Provides no answer content, so it has no coverage of the golden facts and does not answer the question. However, it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 899,
-          "completion_tokens": 356,
-          "total_tokens": 1255
+          "prompt_tokens": 829,
+          "completion_tokens": 357,
+          "total_tokens": 1186
         },
         "latency_seconds": 0.8452104589999934,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "It captures only the general point about accuracy degradation under high compression ratios. The other two listed limitations do not match the golden answer and instead introduce unsupported claims about heterogeneous compression ratio allocation and loss-optimized weight truncation. It therefore has low recall and faithfulness.",
-        "judge_usage": {
-          "prompt_tokens": 899,
-          "completion_tokens": 356,
-          "total_tokens": 1255
-        },
-        "latency_seconds": 6.5326701249999815,
-        "retrieved_context_chars": 6921
-      }
-    }
-  },
-  {
-    "question_id": "q_2502.18036v5_02",
-    "paper_id": "2502.18036v5",
-    "scores": {
-      "rag_gpt4o_mini": {
         "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 4.0,
+        "faithfulness": 5.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Correctly identifies all three types—token-level, span-level, and process-level—and characterizes each in line with the golden answer. It is complete and paper-specific. Minor unsupported elaboration (e.g., 'distribution information' and 'span of four words') slightly reduces faithfulness.",
+        "rationale": "Matches all three limitations in the golden answer: degradation in compression accuracy at high compression ratios relative to quantization, latency overhead when compressing the KV cache due to reconstruction, and low-quality generation such as repeated words requiring better guidance. The answer is complete and paper-specific.",
         "judge_usage": {
-          "prompt_tokens": 929,
-          "completion_tokens": 363,
-          "total_tokens": 1292
+          "prompt_tokens": 829,
+          "completion_tokens": 357,
+          "total_tokens": 1186
         },
-        "latency_seconds": 2.8327725830000006,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
-        "judge_usage": {
-          "prompt_tokens": 929,
-          "completion_tokens": 363,
-          "total_tokens": 1292
-        },
-        "latency_seconds": 1.6721218749999949,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 0.4,
-        "rationale": "The answer does not match the golden answer's three finer-grained types. It substitutes unrelated categories ('Aggregation', 'Selection-Based', 'Hybrid'), omits token/span/process-level granularity, and adds unsupported generalizations. This makes it inaccurate, low-recall, and unfaithful.",
-        "judge_usage": {
-          "prompt_tokens": 929,
-          "completion_tokens": 363,
-          "total_tokens": 1292
-        },
-        "latency_seconds": 7.03365729199993,
-        "retrieved_context_chars": 7197
+        "latency_seconds": 9.024955083000009,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -1954,11 +1900,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Correctly identifies all three categories and the timing distinction for each: before, during, and after inference. It also includes paper-specific subtypes. Minor faithfulness downgrade because it omits the golden answer's detail that during-inference aggregation is fed back to the models and adds subtype taxonomy not required by the golden answer.",
+        "rationale": "Matches all three categories and correctly states the timing distinction: routing before generation, combining outputs during generation, and combining complete responses after generation. It also includes paper-specific subcategories. Minor faithfulness penalty because it omits the golden answer's detail that aggregated text is fed back to the models during inference and adds taxonomy details not required by the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 1046,
-          "completion_tokens": 362,
-          "total_tokens": 1408
+          "prompt_tokens": 1071,
+          "completion_tokens": 380,
+          "total_tokens": 1451
         },
         "latency_seconds": 3.401084916000002,
         "retrieved_context_chars": 13998
@@ -1970,51 +1916,51 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer to the question, so it fails on accuracy, recall, completeness, and specificity. It is faithful in the sense that it does not invent unsupported content.",
         "judge_usage": {
-          "prompt_tokens": 1046,
-          "completion_tokens": 362,
-          "total_tokens": 1408
+          "prompt_tokens": 1071,
+          "completion_tokens": 380,
+          "total_tokens": 1451
         },
         "latency_seconds": 1.3887398749999988,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 3.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Fails to provide the three survey-defined categories or their timing distinctions. It only mentions router types and vaguely references inference timing, so coverage is minimal. Faithfulness is middling because it stays cautious but adds speculative discussion about routers rather than answering the asked taxonomy.",
+        "accuracy": 5.0,
+        "recall": 4.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 4.0,
+        "overall": 5.0,
+        "rationale": "Correctly defines the three categories and clearly distinguishes when ensembling happens in each case. It captures the during-inference idea of aggregating incomplete responses and feeding them back, but is slightly less complete/specific than the golden answer because it gives only token-level as an example and omits the span-level and process-level examples.",
         "judge_usage": {
-          "prompt_tokens": 1046,
-          "completion_tokens": 362,
-          "total_tokens": 1408
+          "prompt_tokens": 1071,
+          "completion_tokens": 380,
+          "total_tokens": 1451
         },
-        "latency_seconds": 8.69389250000006,
-        "retrieved_context_chars": 6620
+        "latency_seconds": 12.98854191700002,
+        "retrieved_context_chars": 14000
       }
     }
   },
   {
-    "question_id": "q_2502.18036v5_04",
+    "question_id": "q_2502.18036v5_02",
     "paper_id": "2502.18036v5",
     "scores": {
       "rag_gpt4o_mini": {
-        "accuracy": 4.0,
-        "recall": 4.0,
-        "faithfulness": 3.0,
-        "completeness": 4.0,
-        "specificity": 4.0,
-        "overall": 4.0,
-        "rationale": "Correctly identifies the generation-assessment-selection pipeline and mentions perplexity as the assessment criterion. However, it omits the golden answer's additional examples of selection criteria such as common words or fixed-length spans, and adds an unsupported detail about selecting the fragment with the highest cumulative score.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches all three method types and their characterizations from the golden answer: token-level at finest decoding granularity, span-level over sequence fragments, and process-level step-by-step reasoning-chain selection. Minor unsupported embellishments (e.g., 'multiple models', 'detailed distribution information', 'span of four words') slightly reduce faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 940,
-          "completion_tokens": 353,
-          "total_tokens": 1293
+          "prompt_tokens": 830,
+          "completion_tokens": 364,
+          "total_tokens": 1194
         },
-        "latency_seconds": 2.670895541,
+        "latency_seconds": 2.8327725830000006,
         "retrieved_context_chars": 13998
       },
       "bare_gpt4o_mini": {
@@ -2024,30 +1970,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. It is faithful in the sense that it does not hallucinate content.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 940,
-          "completion_tokens": 353,
-          "total_tokens": 1293
+          "prompt_tokens": 830,
+          "completion_tokens": 364,
+          "total_tokens": 1194
         },
-        "latency_seconds": 1.6088866670000002,
+        "latency_seconds": 1.6721218749999949,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "Does not identify the generation-assessment-selection pipeline and fails to mention perplexity, common words, or fixed-length spans. Instead, it introduces unrelated content about ensemble strategy, granularity, saliency metrics, and cost/query time, which is unsupported relative to the golden answer.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly identifies all three finer-grained ensemble-during-inference types and describes each in line with the golden answer. Slightly reduced faithfulness due to small unsupported additions such as 'multiple models' and the example 'span of four words.'",
         "judge_usage": {
-          "prompt_tokens": 940,
-          "completion_tokens": 353,
-          "total_tokens": 1293
+          "prompt_tokens": 830,
+          "completion_tokens": 364,
+          "total_tokens": 1194
         },
-        "latency_seconds": 9.249557542000048,
-        "retrieved_context_chars": 7199
+        "latency_seconds": 5.400024374999987,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2056,17 +2002,17 @@
     "paper_id": "2502.18036v5",
     "scores": {
       "rag_gpt4o_mini": {
-        "accuracy": 3.0,
+        "accuracy": 4.0,
         "recall": 4.0,
         "faithfulness": 4.0,
         "completeness": 3.0,
         "specificity": 4.0,
         "overall": 4.0,
-        "rationale": "Correctly identifies CITER and the efficiency-aware property. However, it fails to provide the gold model-count setting (= 2) and instead says it is not mentioned, which reduces accuracy, recall, and completeness. The answer is paper-specific and mostly faithful, though it adds a citation not required by the gold answer.",
+        "rationale": "Correctly identifies CITER and says it is efficiency-aware. However, it fails to provide the model-count setting from the golden answer (= 2), instead saying it is not mentioned.",
         "judge_usage": {
-          "prompt_tokens": 646,
-          "completion_tokens": 360,
-          "total_tokens": 1006
+          "prompt_tokens": 609,
+          "completion_tokens": 326,
+          "total_tokens": 935
         },
         "latency_seconds": 1.4639912499999994,
         "retrieved_context_chars": 13998
@@ -2078,30 +2024,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts from the golden answer. It is still faithful in the sense that it does not hallucinate or contradict the gold answer.",
+        "rationale": "Provides no substantive answer, so it misses all key facts. It is not hallucinated, but it is entirely incomplete and non-specific.",
         "judge_usage": {
-          "prompt_tokens": 646,
-          "completion_tokens": 360,
-          "total_tokens": 1006
+          "prompt_tokens": 609,
+          "completion_tokens": 326,
+          "total_tokens": 935
         },
         "latency_seconds": 0.7397383750000017,
         "retrieved_context_chars": 0
       },
       "papermem": {
+        "accuracy": 3.0,
+        "recall": 4.0,
+        "faithfulness": 2.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 3.0,
+        "rationale": "Correctly identifies CITER and gives the 2-model setting. However, it misstates the efficiency-related property: the golden answer says it is marked as efficiency-aware, while this answer instead gives token-level routing as the property, which is a different field.",
+        "judge_usage": {
+          "prompt_tokens": 609,
+          "completion_tokens": 326,
+          "total_tokens": 935
+        },
+        "latency_seconds": 9.035525124999992,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2502.18036v5_04",
+    "paper_id": "2502.18036v5",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 4.0,
+        "recall": 3.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies the generation-assessment-selection pipeline and mentions perplexity-based assessment. However, it omits the additional selection criteria noted in the golden answer, namely common words and fixed-length spans.",
+        "judge_usage": {
+          "prompt_tokens": 747,
+          "completion_tokens": 326,
+          "total_tokens": 1073
+        },
+        "latency_seconds": 2.670895541,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
         "faithfulness": 5.0,
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question and instead states that the evidence is insufficient. As a result it omits the method name, efficiency-aware property, and the model-count setting (= 2). It remains faithful because it does not invent unsupported details.",
+        "rationale": "Provides no substantive answer, so it fails to cover the pipeline or the span-selection criteria. It is faithful in the sense that it does not hallucinate content, but it does not answer the question.",
         "judge_usage": {
-          "prompt_tokens": 646,
-          "completion_tokens": 360,
-          "total_tokens": 1006
+          "prompt_tokens": 747,
+          "completion_tokens": 326,
+          "total_tokens": 1073
         },
-        "latency_seconds": 5.826724959000103,
-        "retrieved_context_chars": 7198
+        "latency_seconds": 1.6088866670000002,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer closely: it names the generation-assessment-selection pipeline, includes perplexity for assessment, and adds the paper-specific span criteria of common word boundaries and fixed-length segments.",
+        "judge_usage": {
+          "prompt_tokens": 747,
+          "completion_tokens": 326,
+          "total_tokens": 1073
+        },
+        "latency_seconds": 9.064242084,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2116,11 +2116,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches both limitations in the golden answer: simplistic fixed-length span segmentation (e.g., 4-word spans) and non-cascade methods relying on pairwise similarity or extra supervised generation-oriented components that hurt generalization. Includes paper-specific details and answers both parts fully.",
+        "rationale": "Matches both limitations in the golden answer: simplistic fixed-length span segmentation for span-level ensemble-during-inference, and reliance on pairwise similarity or extra supervised generation-oriented components that hurt generalization for non-cascade ensemble-after-inference. Includes paper-specific details like 4-word spans.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 360,
-          "total_tokens": 1286
+          "prompt_tokens": 849,
+          "completion_tokens": 344,
+          "total_tokens": 1193
         },
         "latency_seconds": 5.878153959000002,
         "retrieved_context_chars": 13998
@@ -2134,28 +2134,28 @@
         "overall": 1.0,
         "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 360,
-          "total_tokens": 1286
+          "prompt_tokens": 849,
+          "completion_tokens": 344,
+          "total_tokens": 1193
         },
         "latency_seconds": 1.834968791999998,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 2.0,
-        "recall": 2.0,
-        "faithfulness": 2.0,
-        "completeness": 2.0,
-        "specificity": 2.0,
-        "overall": 2.0,
-        "rationale": "Partially captures the generalization issue for non-cascade ensemble-after-inference, but misses the key point about simplistic pairwise similarity and adds a vague, unsupported limitation about flexibility/adaptation for ensemble-during-inference instead of the specific issue of overly simplistic fixed-length span segmentation. Answer is incomplete and only weakly paper-specific.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly identifies both future-direction limitations with strong paper-specific detail: rigid fixed-length segmentation such as 4-word spans, and non-cascade methods relying on simplistic pairwise similarity or extra supervised generation-oriented components that reduce generalization.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 360,
-          "total_tokens": 1286
+          "prompt_tokens": 849,
+          "completion_tokens": 344,
+          "total_tokens": 1193
         },
-        "latency_seconds": 8.605553916999952,
-        "retrieved_context_chars": 7039
+        "latency_seconds": 9.427814917000006,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2170,11 +2170,11 @@
         "completeness": 4.0,
         "specificity": 3.0,
         "overall": 3.0,
-        "rationale": "Identifies the Cholesky/numerical-stability issue and the replacement with two rounds of SVD, and mentions heterogeneous compression ratio allocation. However, it substitutes one key limitation with an unsupported claim about low-quality/repetitive generation instead of the golden answer's layer-wise redundancy heterogeneity, reducing accuracy and faithfulness.",
+        "rationale": "Gets the Cholesky/numerical-stability issue and the two-round SVD fix correct, and mentions heterogeneous compression allocation. However, it replaces the first limitation with 'quality of generated content' and adds unsupported claims about repeated words and broader task performance. So it has decent coverage but weakened accuracy and faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 386,
-          "total_tokens": 1498
+          "prompt_tokens": 949,
+          "completion_tokens": 355,
+          "total_tokens": 1304
         },
         "latency_seconds": 5.854927750000002,
         "retrieved_context_chars": 13998
@@ -2186,11 +2186,11 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. It is faithful in the sense that it does not hallucinate unsupported content.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not answer the question. But it is faithful in the sense that it does not hallucinate unsupported content.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 386,
-          "total_tokens": 1498
+          "prompt_tokens": 949,
+          "completion_tokens": 355,
+          "total_tokens": 1304
         },
         "latency_seconds": 1.2057489999999973,
         "retrieved_context_chars": 0
@@ -2198,18 +2198,18 @@
       "papermem": {
         "accuracy": 5.0,
         "recall": 5.0,
-        "faithfulness": 4.0,
+        "faithfulness": 5.0,
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches both limitations from the golden answer: homogeneous compression ratios across matrices/layers and Cholesky-based truncation causing positive-definite and numerical-stability issues. It also correctly gives the two remedies: heterogeneous compression ratio allocation based on theoretical truncation loss and loss-optimized truncation using two rounds of SVD. Minor unsupported extras about perplexity and memory-budget gains slightly reduce faithfulness.",
+        "rationale": "Matches the golden answer closely: identifies heterogeneous layer-wise redundancy/compression allocation and the replacement of Cholesky with two rounds of SVD for more stable, lower-loss truncation. It is complete and paper-specific without notable unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 1112,
-          "completion_tokens": 386,
-          "total_tokens": 1498
+          "prompt_tokens": 949,
+          "completion_tokens": 355,
+          "total_tokens": 1304
         },
-        "latency_seconds": 10.805276416999959,
-        "retrieved_context_chars": 6921
+        "latency_seconds": 9.368359083000001,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2220,15 +2220,15 @@
       "rag_gpt4o_mini": {
         "accuracy": 3.0,
         "recall": 3.0,
-        "faithfulness": 2.0,
+        "faithfulness": 3.0,
         "completeness": 4.0,
         "specificity": 4.0,
         "overall": 3.0,
-        "rationale": "Identifies that Theorem 3.1 gives a construction for W' and correctly states the guaranteed property as theoretical minimum truncation loss. However, the formula is incomplete/incorrect versus the golden answer: it omits the Vws term and the sqrt(Ss)^(-1) factor, replacing them with S_s^{-1}. Specific to the paper, but contains important formula errors.",
+        "rationale": "Gets the key guarantee of theoretical minimum truncation loss and gives a paper-specific formula, but the construction is incomplete/incorrect versus the golden answer: it omits the Vws factor and the sqrt(Ss)^(-1) term, replacing them with S_s^{-1}. Extra statement about L2 minimization is plausible but not supported by the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 903,
-          "completion_tokens": 394,
-          "total_tokens": 1297
+          "prompt_tokens": 852,
+          "completion_tokens": 365,
+          "total_tokens": 1217
         },
         "latency_seconds": 2.182916290999998,
         "retrieved_context_chars": 13998
@@ -2240,30 +2240,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not answer the question and provides none of the key facts from the golden answer. However, it is faithful in the sense that it avoids making unsupported claims and explicitly states uncertainty.",
+        "rationale": "Provides no answer to the question, so it misses all required facts. However, it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 903,
-          "completion_tokens": 394,
-          "total_tokens": 1297
+          "prompt_tokens": 852,
+          "completion_tokens": 365,
+          "total_tokens": 1217
         },
         "latency_seconds": 1.4173056670000008,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 2.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Captures only the high-level idea that the method minimizes truncation loss, but does not provide the theorem's actual construction of W'. It adds unrelated details about heterogeneous compression ratio allocation and layer-wise ratios that are not part of the golden answer for this question, reducing faithfulness. Very incomplete and insufficiently specific to Theorem 3.1.",
+        "accuracy": 2.0,
+        "recall": 2.0,
+        "faithfulness": 3.0,
+        "completeness": 3.0,
+        "specificity": 4.0,
+        "overall": 3.0,
+        "rationale": "Correctly states the guarantee of theoretical minimum truncation loss and gives a theorem-specific formula, but the formula is substantially incomplete relative to the golden answer: it omits Vws and sqrt(Ss)^(-1), instead using S_s^{-1}. This lowers accuracy and recall.",
         "judge_usage": {
-          "prompt_tokens": 903,
-          "completion_tokens": 394,
-          "total_tokens": 1297
+          "prompt_tokens": 852,
+          "completion_tokens": 365,
+          "total_tokens": 1217
         },
-        "latency_seconds": 7.416408832999991,
-        "retrieved_context_chars": 7199
+        "latency_seconds": 9.178021083000004,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2276,13 +2276,13 @@
         "recall": 0.0,
         "faithfulness": 0.0,
         "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "The answer is about different datasets (Alpaca, P3, CodeAlpaca) and omits all five correct models and all correct evaluation dataset categories/counts. It directly contradicts the golden answer, so accuracy, recall, completeness, and faithfulness are all effectively zero. It is somewhat specific, but not specific to the correct paper content.",
+        "specificity": 0.0,
+        "overall": 0.0,
+        "rationale": "The answer is about different training/instruction datasets (Alpaca, P3, CodeAlpaca) rather than the paper's experimental models and evaluation dataset categories. It misses all key facts from the golden answer and adds unsupported, irrelevant details.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 401,
-          "total_tokens": 1327
+          "prompt_tokens": 924,
+          "completion_tokens": 349,
+          "total_tokens": 1273
         },
         "latency_seconds": 2.7299282500000004,
         "retrieved_context_chars": 13998
@@ -2290,34 +2290,34 @@
       "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 5.0,
+        "faithfulness": 3.0,
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "The system does not provide the requested paper details, so it has no correct content and no coverage. However, it does not hallucinate or contradict the golden answer; it simply declines to answer, so faithfulness is high. Completeness and specificity are absent.",
+        "rationale": "The system does not answer the question, so it has no recall or completeness and provides no paper-specific details. However, it does not introduce factual contradictions about the paper content, so faithfulness is higher than zero.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 401,
-          "total_tokens": 1327
+          "prompt_tokens": 924,
+          "completion_tokens": 349,
+          "total_tokens": 1273
         },
         "latency_seconds": 1.3101297080000052,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 1.0,
-        "recall": 1.0,
-        "faithfulness": 4.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "The answer correctly notes that there are three categories, which matches part of the golden answer, but it fails to provide the five models, the category names, or the dataset counts in each category. It is mostly cautious and avoids strong unsupported claims, so faithfulness is relatively good, but the answer is still highly incomplete and minimally specific.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "This answer matches the golden answer closely: it lists all five models, all three dataset categories, the counts in each category, and the specific datasets in each category. It is accurate, complete, and paper-specific without unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 926,
-          "completion_tokens": 401,
-          "total_tokens": 1327
+          "prompt_tokens": 924,
+          "completion_tokens": 349,
+          "total_tokens": 1273
         },
-        "latency_seconds": 7.349522125000021,
-        "retrieved_context_chars": 6296
+        "latency_seconds": 9.149342875000002,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2332,11 +2332,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on all core facts: 7 GB budget, perplexity 15.62, average accuracy 0.35, 28% lower perplexity, and 13% higher average accuracy versus structured pruning. It is highly specific. Minor faithfulness penalty for adding detailed baseline names and numbers not required by the golden answer.",
+        "rationale": "Matches the golden answer on the key facts: perplexity 15.62, average accuracy 0.35, 28% perplexity reduction, and 13% accuracy increase. It fully answers the comparison asked. Minor unsupported extra detail is added by naming specific structured pruning methods and their exact numbers, which are not required by the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 925,
-          "completion_tokens": 379,
-          "total_tokens": 1304
+          "prompt_tokens": 845,
+          "completion_tokens": 401,
+          "total_tokens": 1246
         },
         "latency_seconds": 2.1560192920000034,
         "retrieved_context_chars": 13998
@@ -2348,30 +2348,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested comparison or any of the numeric results from the golden answer. However, it does not hallucinate facts and is appropriately cautious.",
+        "rationale": "Provides no substantive answer to the question, so it misses all key facts from the golden answer. However, it does not hallucinate or contradict the gold; it simply abstains.",
         "judge_usage": {
-          "prompt_tokens": 925,
-          "completion_tokens": 379,
-          "total_tokens": 1304
+          "prompt_tokens": 845,
+          "completion_tokens": 401,
+          "total_tokens": 1246
         },
         "latency_seconds": 1.3884908750000022,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 1.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Conflicts strongly with the golden answer: gives perplexity as 97 instead of 15.62, claims a 39% reduction instead of 28%, and omits the correct average accuracy value of 0.35 and the 13% improvement. It is somewhat specific to the paper context but largely inaccurate and unsupported relative to the gold.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly gives all core facts from the golden answer: perplexity 15.62, average accuracy 0.35, 28% reduction in perplexity, and 13% increase in average accuracy under the 7 GB budget. It is complete and specific. As with the other strong answer, it includes extra baseline names and values not needed by the golden answer, so faithfulness is slightly reduced for unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 925,
-          "completion_tokens": 379,
-          "total_tokens": 1304
+          "prompt_tokens": 845,
+          "completion_tokens": 401,
+          "total_tokens": 1246
         },
-        "latency_seconds": 7.443460707999975,
-        "retrieved_context_chars": 6066
+        "latency_seconds": 10.201087790999992,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2381,16 +2381,16 @@
     "scores": {
       "rag_gpt4o_mini": {
         "accuracy": 5.0,
-        "recall": 5.0,
+        "recall": 4.0,
         "faithfulness": 5.0,
-        "completeness": 5.0,
-        "specificity": 5.0,
-        "overall": 5.0,
-        "rationale": "Matches the golden answer on both points: each component alone outperforms original SVD-LLM, the full method outperforms either single-component variant, and calibration sensitivity is low with no more than 1% fluctuation. Includes paper-specific component names.",
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Matches the golden answer on both main conclusions: each component alone helps, the full method is best, and calibration sensitivity is low with <=1% fluctuation. Slightly misses some paper-specific details from the gold, such as explicitly naming allocation-only/truncation-only variants and the exact setting (LLaMA-7B, 20% compression, WikiText-2).",
         "judge_usage": {
-          "prompt_tokens": 1024,
-          "completion_tokens": 352,
-          "total_tokens": 1376
+          "prompt_tokens": 929,
+          "completion_tokens": 395,
+          "total_tokens": 1324
         },
         "latency_seconds": 2.419255749999998,
         "retrieved_context_chars": 13998
@@ -2402,84 +2402,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts. It is at least faithful in not inventing details.",
+        "rationale": "Provides no substantive answer, so it fails to cover the requested conclusions. It is faithful in that it does not invent facts, but it has no useful recall, completeness, or specificity.",
         "judge_usage": {
-          "prompt_tokens": 1024,
-          "completion_tokens": 352,
-          "total_tokens": 1376
+          "prompt_tokens": 929,
+          "completion_tokens": 395,
+          "total_tokens": 1324
         },
         "latency_seconds": 0.7791947909999948,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 2.0,
-        "recall": 3.0,
-        "faithfulness": 1.0,
-        "completeness": 3.0,
-        "specificity": 3.0,
-        "overall": 2.0,
-        "rationale": "Gets the broad idea that both components matter and calibration sensitivity is limited, but misses key golden-answer details and introduces unsupported or incorrect claims. It does not state that both single-component variants outperform original SVD-LLM, uses different variant labels, and gives an incorrect calibration fluctuation figure (3% instead of 1%).",
-        "judge_usage": {
-          "prompt_tokens": 1024,
-          "completion_tokens": 352,
-          "total_tokens": 1376
-        },
-        "latency_seconds": 9.038153040999987,
-        "retrieved_context_chars": 7198
-      }
-    }
-  },
-  {
-    "question_id": "q_2306.08568_02",
-    "paper_id": "2306.08568",
-    "scores": {
-      "rag_gpt4o_mini": {
-        "accuracy": 4.0,
+        "accuracy": 5.0,
         "recall": 4.0,
-        "faithfulness": 4.0,
-        "completeness": 4.0,
-        "specificity": 5.0,
-        "overall": 4.0,
-        "rationale": "Covers three of the four golden-answer items: coding-task-feature heuristics, adversarial sample heuristics, and time/space complexity requirements. It misses evolving stop controls. The answer is paper-specific and mostly faithful, though wording like LeetCode focus and 'previous studies' is extra and not supported by the golden answer.",
-        "judge_usage": {
-          "prompt_tokens": 823,
-          "completion_tokens": 357,
-          "total_tokens": 1180
-        },
-        "latency_seconds": 1.752134500000004,
-        "retrieved_context_chars": 13998
-      },
-      "bare_gpt4o_mini": {
-        "accuracy": 0.0,
-        "recall": 0.0,
         "faithfulness": 5.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 1.0,
-        "rationale": "Does not provide the requested techniques, so it has no factual coverage of the golden answer. However, it does not hallucinate and is faithful in explicitly expressing uncertainty.",
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly states that both components individually outperform original SVD-LLM, the combined version performs best, and calibration changes lead to no more than 1% fluctuation. Like the other strong answer, it omits some exact experimental specifics from the golden answer, especially LLaMA-7B at 20% compression on WikiText-2.",
         "judge_usage": {
-          "prompt_tokens": 823,
-          "completion_tokens": 357,
-          "total_tokens": 1180
+          "prompt_tokens": 929,
+          "completion_tokens": 395,
+          "total_tokens": 1324
         },
-        "latency_seconds": 0.5777606249999963,
-        "retrieved_context_chars": 0
-      },
-      "papermem": {
-        "accuracy": 1.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 1.0,
-        "specificity": 2.0,
-        "overall": 1.0,
-        "rationale": "Fails to identify the coding-domain-specific techniques listed in the golden answer. Instead it discusses iterative dataset evolution and fine-tuning, which are not the requested method details here. It is somewhat paper-related but largely unsupported relative to the golden answer.",
-        "judge_usage": {
-          "prompt_tokens": 823,
-          "completion_tokens": 357,
-          "total_tokens": 1180
-        },
-        "latency_seconds": 6.621810000000096,
-        "retrieved_context_chars": 6846
+        "latency_seconds": 10.204748666,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2494,11 +2440,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly: it identifies the two steps (evolving Code Alpaca with Code Evol-Instruct, then fine-tuning StarCoder and CodeLlama on the generated dataset) and names all required datasets/models.",
+        "rationale": "Matches the golden answer exactly: it identifies evolving Code Alpaca with Code Evol-Instruct and then fine-tuning StarCoder and CodeLlama on the generated dataset. It is complete and paper-specific without unsupported additions.",
         "judge_usage": {
-          "prompt_tokens": 892,
-          "completion_tokens": 341,
-          "total_tokens": 1233
+          "prompt_tokens": 861,
+          "completion_tokens": 342,
+          "total_tokens": 1203
         },
         "latency_seconds": 2.2417830420000016,
         "retrieved_context_chars": 13998
@@ -2510,30 +2456,84 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not introduce unsupported claims or contradictions.",
+        "rationale": "Provides no substantive answer, so it misses all key facts and does not address the question. However, it does not hallucinate or contradict the golden answer.",
         "judge_usage": {
-          "prompt_tokens": 892,
-          "completion_tokens": 341,
-          "total_tokens": 1233
+          "prompt_tokens": 861,
+          "completion_tokens": 342,
+          "total_tokens": 1203
         },
         "latency_seconds": 0.6186349170000014,
         "retrieved_context_chars": 0
       },
       "papermem": {
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Correctly gives both steps and names Code Alpaca, StarCoder, and CodeLlama. It is complete and specific. Minor faithfulness penalty because it adds model-size variants (StarCoder 15B and CodeLlama-34B-Python) not stated in the golden answer.",
+        "judge_usage": {
+          "prompt_tokens": 861,
+          "completion_tokens": 342,
+          "total_tokens": 1203
+        },
+        "latency_seconds": 14.443444375000013,
+        "retrieved_context_chars": 14000
+      }
+    }
+  },
+  {
+    "question_id": "q_2306.08568_02",
+    "paper_id": "2306.08568",
+    "scores": {
+      "rag_gpt4o_mini": {
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Covers most golden-answer items: coding-task heuristics, adversarial samples, and time/space complexity requirements. It misses the evolving stop controls. The answer is fairly specific to the paper, though it adds some unsupported framing about LeetCode and complexity escalation.",
+        "judge_usage": {
+          "prompt_tokens": 749,
+          "completion_tokens": 348,
+          "total_tokens": 1097
+        },
+        "latency_seconds": 1.752134500000004,
+        "retrieved_context_chars": 13998
+      },
+      "bare_gpt4o_mini": {
         "accuracy": 0.0,
         "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 1.0,
-        "specificity": 1.0,
-        "overall": 0.4,
-        "rationale": "Does not match the golden answer. It replaces the correct two-step process with unrelated steps ('Hybrid Instruction Pre-training' and 'Continuous Pre-Training'), omits Code Alpaca, StarCoder, and CodeLlama, and adds unsupported details about GPT-4 and instruction distillation.",
+        "faithfulness": 5.0,
+        "completeness": 0.0,
+        "specificity": 0.0,
+        "overall": 1.0,
+        "rationale": "Provides no substantive answer, so it does not recover any of the golden facts. However, it does not hallucinate and explicitly states uncertainty, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 892,
-          "completion_tokens": 341,
-          "total_tokens": 1233
+          "prompt_tokens": 749,
+          "completion_tokens": 348,
+          "total_tokens": 1097
         },
-        "latency_seconds": 7.261746832999961,
-        "retrieved_context_chars": 7198
+        "latency_seconds": 0.5777606249999963,
+        "retrieved_context_chars": 0
+      },
+      "papermem": {
+        "accuracy": 4.0,
+        "recall": 4.0,
+        "faithfulness": 4.0,
+        "completeness": 4.0,
+        "specificity": 4.0,
+        "overall": 4.0,
+        "rationale": "Correctly identifies coding-task heuristics, adversarial sample heuristics, and time/space complexity emphasis, but omits evolving stop controls. It is specific and mostly faithful, though it adds unsupported details such as LeetCode references and prior-work motivations.",
+        "judge_usage": {
+          "prompt_tokens": 749,
+          "completion_tokens": 348,
+          "total_tokens": 1097
+        },
+        "latency_seconds": 6.282947042000018,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2543,16 +2543,16 @@
     "scores": {
       "rag_gpt4o_mini": {
         "accuracy": 1.0,
-        "recall": 1.0,
+        "recall": 2.0,
         "faithfulness": 1.0,
         "completeness": 3.0,
         "specificity": 4.0,
         "overall": 2.0,
-        "rationale": "Provides specific JavaScript pass@1 numbers and a comparison, but all reported values are incorrect versus the golden answer (should be 55.3 vs 45.9, gain 9.4). It answers both parts of the question, yet the incorrect figures and unsupported citation reduce accuracy and faithfulness.",
+        "rationale": "Provides specific JavaScript pass@1 numbers and a comparison, but all key values are incorrect versus the golden answer (should be 55.3 vs 45.9, gain 9.4). It answers both parts of the question, yet the unsupported wrong figures reduce accuracy and faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 724,
-          "completion_tokens": 360,
-          "total_tokens": 1084
+          "prompt_tokens": 699,
+          "completion_tokens": 363,
+          "total_tokens": 1062
         },
         "latency_seconds": 3.562593917000001,
         "retrieved_context_chars": 13998
@@ -2564,30 +2564,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested score or comparison, so it has no recall or completeness. However, it does not hallucinate facts and remains appropriately uncertain, so faithfulness is high.",
+        "rationale": "Does not provide the requested scores or comparison, so it has no useful recall or completeness. However, it does not hallucinate facts and explicitly states uncertainty, so faithfulness is high.",
         "judge_usage": {
-          "prompt_tokens": 724,
-          "completion_tokens": 360,
-          "total_tokens": 1084
+          "prompt_tokens": 699,
+          "completion_tokens": 363,
+          "total_tokens": 1062
         },
         "latency_seconds": 1.7504676670000023,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 4.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 1.0,
-        "rationale": "Fails to provide the golden-answer values or comparison and instead states the evidence is insufficient. This avoids most direct hallucination, but it adds a generic claim about state-of-the-art performance not needed for the question, slightly lowering faithfulness. Specificity is minimal.",
+        "accuracy": 1.0,
+        "recall": 2.0,
+        "faithfulness": 1.0,
+        "completeness": 3.0,
+        "specificity": 4.0,
+        "overall": 2.0,
+        "rationale": "Gives concrete JavaScript pass@1 values and the point difference, but they are incorrect compared with the golden answer (55.3 vs 45.9, +9.4). It covers both requested elements, but the wrong paper-specific numbers hurt accuracy and faithfulness.",
         "judge_usage": {
-          "prompt_tokens": 724,
-          "completion_tokens": 360,
-          "total_tokens": 1084
+          "prompt_tokens": 699,
+          "completion_tokens": 363,
+          "total_tokens": 1062
         },
-        "latency_seconds": 6.491965499999878,
-        "retrieved_context_chars": 6586
+        "latency_seconds": 10.376780292000007,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2602,11 +2602,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer on all key points: DS-1000 supports completion and insertion, the paper reports insertion scores for models that support insertion, and evaluation uses pass@1 over 40 samples with temperature 0.2, top-p 0.5, and max length 1024. Includes extra benchmark-description details not needed by the golden answer, so faithfulness is slightly reduced due to unsupported additions.",
+        "rationale": "Matches the golden answer on both supported modes, that the authors report insertion scores for models supporting insertion, and the hyperparameters/pass@1 over 40 samples. Minor unsupported extra details about DS-1000 containing 1,000 workflows across seven libraries and test-case assessment lower faithfulness slightly.",
         "judge_usage": {
-          "prompt_tokens": 1062,
-          "completion_tokens": 414,
-          "total_tokens": 1476
+          "prompt_tokens": 845,
+          "completion_tokens": 364,
+          "total_tokens": 1209
         },
         "latency_seconds": 5.3661106249999975,
         "retrieved_context_chars": 13998
@@ -2618,30 +2618,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Provides no substantive answer to the question, so it misses all key facts from the golden answer. It is faithful in the sense that it does not hallucinate or contradict the gold, but it is incomplete and nonspecific.",
+        "rationale": "Provides no substantive answer, so it misses all key facts from the golden answer. It is not hallucinated, so faithfulness is high, but accuracy, recall, completeness, and specificity are effectively absent.",
         "judge_usage": {
-          "prompt_tokens": 1062,
-          "completion_tokens": 414,
-          "total_tokens": 1476
+          "prompt_tokens": 845,
+          "completion_tokens": 364,
+          "total_tokens": 1209
         },
         "latency_seconds": 0.7209447499999939,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 1.0,
-        "completeness": 0.0,
-        "specificity": 0.0,
-        "overall": 0.2,
-        "rationale": "Fails to provide the core facts from the golden answer and instead discusses unrelated material. It does not mention the two DS-1000 modes, the reported insertion scores, or the pass@1/40-sample setup with temperature 0.2, top-p 0.5, and max length 1024. The answer includes unsupported and off-topic additions, reducing faithfulness.",
+        "accuracy": 3.0,
+        "recall": 4.0,
+        "faithfulness": 2.0,
+        "completeness": 3.0,
+        "specificity": 4.0,
+        "overall": 3.0,
+        "rationale": "Correctly identifies completion and insertion modes, that insertion scores are reported, and gives the generation hyperparameters. However, it omits the pass@1 accuracy averaged over 40 samples and adds unsupported claims about benchmark composition and WizardCoder superiority, reducing faithfulness and completeness.",
         "judge_usage": {
-          "prompt_tokens": 1062,
-          "completion_tokens": 414,
-          "total_tokens": 1476
+          "prompt_tokens": 845,
+          "completion_tokens": 364,
+          "total_tokens": 1209
         },
-        "latency_seconds": 11.486285250000037,
-        "retrieved_context_chars": 6328
+        "latency_seconds": 5.886394666000001,
+        "retrieved_context_chars": 14000
       }
     }
   },
@@ -2656,11 +2656,11 @@
         "completeness": 5.0,
         "specificity": 5.0,
         "overall": 5.0,
-        "rationale": "Matches the golden answer exactly: identifies CodeLlama-Instruct-34B as having low coding performance for response generation and states the workaround of fine-tuning on the code-alpaca dataset for response generation.",
+        "rationale": "Matches the golden answer closely: identifies CodeLlama-Instruct-34B, states the limitation was low coding performance for response generation during evolution execution, and gives the correct workaround of fine-tuning on the code-alpaca dataset and using the fine-tuned model.",
         "judge_usage": {
-          "prompt_tokens": 704,
-          "completion_tokens": 339,
-          "total_tokens": 1043
+          "prompt_tokens": 630,
+          "completion_tokens": 347,
+          "total_tokens": 977
         },
         "latency_seconds": 1.7760591669999997,
         "retrieved_context_chars": 13998
@@ -2672,30 +2672,30 @@
         "completeness": 0.0,
         "specificity": 0.0,
         "overall": 1.0,
-        "rationale": "Does not provide the requested information, so accuracy, recall, completeness, and specificity are absent. However, it does not hallucinate or contradict the golden answer, so faithfulness is high.",
+        "rationale": "Provides no substantive answer and misses all key facts from the golden answer. However, it does not hallucinate or contradict the reference, instead explicitly expressing uncertainty.",
         "judge_usage": {
-          "prompt_tokens": 704,
-          "completion_tokens": 339,
-          "total_tokens": 1043
+          "prompt_tokens": 630,
+          "completion_tokens": 347,
+          "total_tokens": 977
         },
         "latency_seconds": 0.7646783330000062,
         "retrieved_context_chars": 0
       },
       "papermem": {
-        "accuracy": 0.0,
-        "recall": 0.0,
-        "faithfulness": 0.0,
-        "completeness": 0.0,
-        "specificity": 1.0,
-        "overall": 0.2,
-        "rationale": "Incorrectly attributes the limitation to error-handling and data integrity constraints, which is unrelated to the golden answer. It misses the actual issue of low coding performance and the workaround of fine-tuning on code-alpaca, and adds unsupported details.",
+        "accuracy": 5.0,
+        "recall": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "specificity": 5.0,
+        "overall": 5.0,
+        "rationale": "Matches the golden answer closely: names CodeLlama-Instruct-34B, describes the low coding performance in response generation, and correctly states the workaround of fine-tuning on the code-alpaca dataset and using the fine-tuned model for response generation.",
         "judge_usage": {
-          "prompt_tokens": 704,
-          "completion_tokens": 339,
-          "total_tokens": 1043
+          "prompt_tokens": 630,
+          "completion_tokens": 347,
+          "total_tokens": 977
         },
-        "latency_seconds": 5.898224250000112,
-        "retrieved_context_chars": 6803
+        "latency_seconds": 5.388999541000004,
+        "retrieved_context_chars": 14000
       }
     }
   }

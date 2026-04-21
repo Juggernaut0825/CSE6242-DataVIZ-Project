@@ -253,11 +253,12 @@ The current memory pipeline is intentionally lighter than the original GauzRag p
 ### Retrieval Pipeline
 
 1. embed query
-2. semantic nearest-neighbor search in `pgvector`
-3. expand through graph relations
-4. collect evidence anchors
-5. stream answer generation
-6. persist retrieval metadata and reasoning records
+2. optionally scope retrieval to a selected source file
+3. combine lexical exact-match recall with semantic nearest-neighbor search in `pgvector`
+4. expand through adjacent source chunks and graph relations
+5. collect evidence anchors under a context budget
+6. stream grounded answer generation
+7. persist retrieval metadata and reasoning records
 
 This keeps the system generalizable and fast enough for interactive use, while still surfacing semantic structure for visualization.
 
@@ -293,6 +294,43 @@ The main controls are:
 - `SEMANTIC_LLM_SELECTION_STRATEGY=mmr` enables salience plus embedding-diversity selection
 - `SEMANTIC_LLM_CONCURRENCY` and `SEMANTIC_LLM_TIMEOUT_SECONDS` bound ingestion latency
 - `RELATION_LINK_TOP_K` bounds cross-chunk relation linking work
+
+## Evaluation
+
+The LLM-as-a-judge benchmark lives in `llm_as_judge`, with the downloaded paper set in `eval_paper2`.
+
+The current benchmark uses 10 long arXiv papers about LLMs. GPT-5.4 generated 50 paper-specific questions and golden-standard answers, five per paper. The systems under test answer the same questions:
+
+- `papermem`: the PaperMem backend with source-aware memory retrieval, lexical + vector recall, adjacent chunk expansion, graph expansion, and GPT-4o mini answer generation
+- `rag_gpt4o_mini`: a traditional vector-RAG baseline over the same 10 papers, using GPT-4o mini
+- `bare_gpt4o_mini`: GPT-4o mini without retrieval context
+
+GPT-5.4 then judges each answer against the golden answer on:
+
+- `accuracy`: factual match to the golden answer
+- `recall`: coverage of required details
+- `faithfulness`: whether the answer avoids unsupported or contradictory claims
+- `completeness`: whether the answer fully resolves the question
+- `specificity`: whether the answer uses paper-specific details rather than generic statements
+- `overall`: holistic score from 0 to 5
+- `time_efficiency`: latency-normalized utility score
+
+Latest 50-question average metrics:
+
+| system | n | accuracy | recall | faithfulness | completeness | specificity | overall | time_efficiency | avg_latency_seconds | avg_context_chars |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| bare_gpt4o_mini | 50 | 0.04 | 0.04 | 4.80 | 0.04 | 0.04 | 1.02 | 4.989 | 1.245 | 0 |
+| papermem | 50 | 4.28 | 4.26 | 4.00 | 4.32 | 4.38 | 4.24 | 0.679 | 9.471 | 14000 |
+| rag_gpt4o_mini | 50 | 4.08 | 4.18 | 3.64 | 4.22 | 4.28 | 4.10 | 2.068 | 3.391 | 13997 |
+
+PaperMem outperforms the traditional RAG baseline on overall answer quality, accuracy, faithfulness, completeness, and specificity. The main tradeoff is latency: PaperMem spends more time assembling explainable memory evidence and graph-expanded context.
+
+To reproduce:
+
+```bash
+python -m llm_as_judge.run_eval --download --generate-questions
+python -m llm_as_judge.run_eval --run-systems --systems papermem,rag,bare --papermem-ingest --judge
+```
 
 ## Graph Visualization Strategy
 
@@ -386,6 +424,7 @@ EMBEDDING_DIMENSIONS=256
 NEO4J_URI=bolt://127.0.0.1:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=papermemneo4j
+NEO4J_REQUIRED=false
 
 POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
@@ -393,6 +432,8 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DATABASE=papermem
 ```
+
+For Railway or AuraDB Free deployments, keep `NEO4J_REQUIRED=false` unless the API should refuse to start without Neo4j. AuraDB Free instances can pause and spend time in `RESUMING`; during that window the Bolt hostname may fail DNS resolution. With `NEO4J_REQUIRED=false`, PaperMem starts with Postgres/vector retrieval and automatically disables graph calls until the process is restarted against an available Neo4j endpoint.
 
 ### 3. Start Backend
 

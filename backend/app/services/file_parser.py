@@ -71,12 +71,19 @@ def parse_file_bytes(filename: str, data: bytes) -> Dict[str, Any]:
         document = fitz.open(stream=data, filetype="pdf")
         try:
             chunks = []
+            next_chunk_index = 0
             for page_index, page in enumerate(document):
                 text = sanitize_text(page.get_text("text")).strip()
                 if not text:
                     continue
-                page_chunks = _chunk_text(text, name, page_index=page_index + 1)
+                page_chunks = _chunk_text(
+                    text,
+                    name,
+                    page_index=page_index + 1,
+                    start_chunk_index=next_chunk_index,
+                )
                 chunks.extend(page_chunks)
+                next_chunk_index += len(page_chunks)
             page_count = document.page_count
         finally:
             document.close()
@@ -101,18 +108,30 @@ def _parse_pdf(path: Path) -> tuple[List[Dict[str, Any]], int]:
     document = fitz.open(path)
     chunks: List[Dict[str, Any]] = []
     try:
+        next_chunk_index = 0
         for page_index, page in enumerate(document):
             text = sanitize_text(page.get_text("text")).strip()
             if not text:
                 continue
-            page_chunks = _chunk_text(text, path.name, page_index=page_index + 1)
+            page_chunks = _chunk_text(
+                text,
+                path.name,
+                page_index=page_index + 1,
+                start_chunk_index=next_chunk_index,
+            )
             chunks.extend(page_chunks)
+            next_chunk_index += len(page_chunks)
         return chunks, document.page_count
     finally:
         document.close()
 
 
-def _chunk_text(text: str, source_name: str, page_index: int | None = None) -> List[Dict[str, Any]]:
+def _chunk_text(
+    text: str,
+    source_name: str,
+    page_index: int | None = None,
+    start_chunk_index: int = 0,
+) -> List[Dict[str, Any]]:
     normalized = " ".join(line.strip() for line in sanitize_text(text).splitlines() if line.strip())
     if not normalized:
         return []
@@ -126,7 +145,7 @@ def _chunk_text(text: str, source_name: str, page_index: int | None = None) -> L
         chunk_text = normalized[start:end].strip()
         if chunk_text:
             metadata = {
-                "chunk_index": chunk_index,
+                "chunk_index": start_chunk_index + chunk_index,
                 "source_name": source_name,
             }
             if page_index is not None:

@@ -124,6 +124,44 @@ def save_message(
     return message
 
 
+def build_answer_context(
+    retrieved_units: List[Dict[str, Any]],
+    char_budget: int,
+    chars_per_unit: int,
+) -> str:
+    sections: List[str] = []
+    used = 0
+    for index, item in enumerate(retrieved_units, start=1):
+        metadata = item.get("metadata") or {}
+        source = metadata.get("filename") or item.get("source_id") or item.get("source_type")
+        page = metadata.get("page")
+        chunk_index = metadata.get("chunk_index")
+        source_parts = [str(source)]
+        if page is not None:
+            source_parts.append(f"page {page}")
+        if chunk_index is not None:
+            source_parts.append(f"chunk {chunk_index}")
+        source_label = ", ".join(source_parts)
+        header = (
+            f"[{index}] {source_label}; "
+            f"retrieval={item.get('retrieval_source', 'vector')}; "
+            f"score={item.get('score', 0)}\n"
+            f"Summary: {item.get('summary', '')}\n"
+            "Evidence: "
+        )
+        remaining = char_budget - used - len(header) - 2
+        if remaining <= 0:
+            break
+        evidence = (item.get("text") or "").strip()
+        evidence = evidence[: min(chars_per_unit, remaining)]
+        if not evidence:
+            continue
+        section = header + evidence
+        sections.append(section)
+        used += len(section) + 2
+    return "\n\n".join(sections)
+
+
 @app.get("/health")
 def health() -> Dict[str, Any]:
     return {
@@ -131,6 +169,7 @@ def health() -> Dict[str, Any]:
         "stack": {
             "postgres": settings.postgres_database,
             "neo4j": settings.neo4j_uri,
+            "neo4j_available": graph_service.available,
             "llm_model": settings.llm_model,
             "embedding_model": settings.embedding_model,
         },
@@ -338,6 +377,7 @@ async def agentic_search(payload: Dict[str, Any], db: Session = Depends(get_db))
     project_id = payload.get("project_id")
     top_k = int(payload.get("top_k") or settings.retrieval_top_k)
     session_id = payload.get("session_id")
+    source_name = payload.get("source_name") or payload.get("filename")
     if not query or not project_id:
         raise HTTPException(status_code=400, detail="query and project_id are required")
     if session_id:
@@ -356,6 +396,7 @@ async def agentic_search(payload: Dict[str, Any], db: Session = Depends(get_db))
         query=query,
         top_k=top_k,
         session_id=session.id,
+        source_name=source_name,
     )
 
 
@@ -381,6 +422,9 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
     top_k = int(payload.get("top_k") or settings.retrieval_top_k)
     requested_session_id = payload.get("session_id")
     skip_memory_ingest = bool(payload.get("skip_memory_ingest"))
+    source_name = payload.get("source_name") or payload.get("filename")
+    context_budget = int(payload.get("context_budget") or settings.answer_context_char_budget)
+    chars_per_unit = int(payload.get("evidence_chars_per_unit") or settings.answer_evidence_chars_per_unit)
     if not query or not project_id:
         raise HTTPException(status_code=400, detail="query and project_id are required")
 
@@ -401,17 +445,20 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
         query=query,
         top_k=top_k,
         session_id=session_id,
+        source_name=source_name,
     )
-    context_sections = []
-    for item in search_results["retrieved_units"][:top_k]:
-        context_sections.append(
-            f"[{item['source_type']}] {item['summary']}\nEvidence: {item['text'][:300]}"
-        )
-    context_text = "\n\n".join(context_sections)
+    context_text = build_answer_context(
+        search_results["retrieved_units"],
+        char_budget=context_budget,
+        chars_per_unit=chars_per_unit,
+    )
     system_prompt = (
         "You are PaperMem Copilot, an explainable memory assistant. "
-        "Use the retrieved evidence faithfully, mention uncertainty when evidence is sparse, "
-        "and prefer concise answers with concrete citations."
+        "Answer only from the retrieved evidence. "
+        "When the question asks for numbers, benchmark scores, definitions, datasets, or named methods, "
+        "copy those details exactly from the evidence. "
+        "If the evidence does not contain the requested detail, say that it is not found instead of guessing. "
+        "Keep the answer concise and cite evidence bracket numbers when useful."
     )
     agent = ReasonerAgent(system_prompt=system_prompt, model_provider=settings.llm_model)
 
@@ -426,7 +473,8 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
             yield f"data: {json.dumps({'type': 'reasoning', 'content': reasoning_text}, ensure_ascii=False)}\n\n"
         try:
             async for chunk in agent.stream(
-                f"User query:\n{query}\n\nRetrieved memory:\n{context_text}\n\nAnswer with grounded reasoning."
+                f"User query:\n{query}\n\nRetrieved evidence:\n{context_text}\n\n"
+                "Give the final answer. Do not add claims that are not supported by the retrieved evidence."
             ):
                 if chunk.get("type") == "content_chunk":
                     full_content += chunk.get("content", "")

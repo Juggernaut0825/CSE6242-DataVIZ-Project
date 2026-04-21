@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 
 from .config import EvalSettings
-from .papers import iter_pdf_paths, load_metadata
+from .papers import PaperRecord, iter_pdf_paths, load_metadata
 
 
 class PaperMemService:
@@ -27,8 +27,11 @@ class PaperMemService:
         self.state_path = state_path
         self.project_id = project_id
         self.session_id = session_id
+        self.records_by_id: dict[str, PaperRecord] = {}
 
     async def prepare(self, ingest: bool = True, reuse_state: bool = True) -> None:
+        records = load_metadata(self.papers_dir)
+        self.records_by_id = {record.paper_id: record for record in records}
         if reuse_state and self.state_path.exists() and not self.project_id:
             state = json.loads(self.state_path.read_text(encoding="utf-8"))
             self.project_id = state.get("project_id")
@@ -55,7 +58,6 @@ class PaperMemService:
                 response.raise_for_status()
                 self.session_id = response.json()["id"]
             if ingest:
-                records = load_metadata(self.papers_dir)
                 for pdf_path in iter_pdf_paths(records):
                     response = await client.post(
                         "/files/ingest",
@@ -84,6 +86,8 @@ class PaperMemService:
         started = time.perf_counter()
         answer_parts: list[str] = []
         search_payload: dict[str, Any] = {}
+        record = self.records_by_id.get(question.get("paper_id", ""))
+        source_name = Path(record.pdf_path).name if record and self.settings.papermem_use_source_hint else None
         async with httpx.AsyncClient(base_url=self.settings.papermem_api_base, timeout=None) as client:
             async with client.stream(
                 "POST",
@@ -92,7 +96,10 @@ class PaperMemService:
                     "query": question["question"],
                     "project_id": self.project_id,
                     "session_id": self.session_id,
-                    "top_k": self.settings.rag_top_k,
+                    "top_k": self.settings.papermem_top_k,
+                    "source_name": source_name,
+                    "context_budget": self.settings.papermem_context_budget,
+                    "evidence_chars_per_unit": self.settings.papermem_evidence_chars_per_unit,
                     "skip_memory_ingest": True,
                 },
             ) as response:
@@ -118,13 +125,17 @@ class PaperMemService:
             "answer": "".join(answer_parts).strip(),
             "latency_seconds": elapsed,
             "usage": {},
-            "retrieved_context_chars": sum(len(item.get("text", "")) for item in retrieved_units),
+            "retrieved_context_chars": min(
+                self.settings.papermem_context_budget,
+                sum(len(item.get("text", "")) for item in retrieved_units),
+            ),
             "retrieved_chunks": [
                 {
                     "unit_id": item.get("id"),
                     "source_type": item.get("source_type"),
                     "summary": item.get("summary"),
                     "score": item.get("score"),
+                    "retrieval_source": item.get("retrieval_source"),
                     "metadata": item.get("metadata"),
                 }
                 for item in retrieved_units

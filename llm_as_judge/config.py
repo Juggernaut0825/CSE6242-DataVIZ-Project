@@ -61,6 +61,10 @@ class EvalSettings:
     embedding_model: str
     embedding_dimensions: int
     papermem_api_base: str
+    papermem_top_k: int
+    papermem_context_budget: int
+    papermem_evidence_chars_per_unit: int
+    papermem_use_source_hint: bool
     request_timeout_seconds: float
     rag_top_k: int
     rag_chunk_chars: int
@@ -104,6 +108,11 @@ def load_settings() -> EvalSettings:
         embedding_dimensions=_env_int("EVAL_EMBEDDING_DIMENSIONS", _env_int("EMBEDDING_DIMENSIONS", 256)),
         papermem_api_base=_env("EVAL_PAPERMEM_API_BASE", "http://127.0.0.1:8000")
         or "http://127.0.0.1:8000",
+        papermem_top_k=_env_int("EVAL_PAPERMEM_TOP_K", 16),
+        papermem_context_budget=_env_int("EVAL_PAPERMEM_CONTEXT_BUDGET", 14000),
+        papermem_evidence_chars_per_unit=_env_int("EVAL_PAPERMEM_EVIDENCE_CHARS_PER_UNIT", 1600),
+        papermem_use_source_hint=(_env("EVAL_PAPERMEM_USE_SOURCE_HINT", "true") or "true").lower()
+        in {"1", "true", "yes", "on"},
         request_timeout_seconds=_env_float("EVAL_REQUEST_TIMEOUT_SECONDS", 180.0),
         rag_top_k=_env_int("EVAL_RAG_TOP_K", 8),
         rag_chunk_chars=_env_int("EVAL_RAG_CHUNK_CHARS", 1800),
@@ -119,4 +128,3 @@ def require_api_key(settings: EvalSettings) -> None:
             "Missing API key. Set EVAL_OPENAI_API_KEY or OPENAI_API_KEY. "
             "If you want to reuse backend/.env, make sure LLM_API_KEY is set there."
         )
-

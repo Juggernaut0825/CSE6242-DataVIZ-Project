@@ -181,30 +181,81 @@ class MemoryService:
         query: str,
         top_k: int,
         session_id: str | None = None,
+        source_name: str | None = None,
     ) -> Dict[str, Any]:
         query_embedding = (await self.embedding_service.embed_texts([query]))[0]
-        rows = (
+        source_file_ids = self._source_file_ids(db, project_id, source_name)
+        search_query = (
             db.query(
                 MemoryUnit,
                 MemoryUnit.embedding.cosine_distance(query_embedding).label("distance"),
             )
             .filter(MemoryUnit.project_id == project_id)
-            .order_by("distance")
-            .limit(top_k)
-            .all()
         )
-        retrieved_units = [
-            {
-                **self._serialize_unit(unit),
-                "score": round(max(0.0, 1.0 - float(distance)), 4),
-            }
-            for unit, distance in rows
-        ]
+        if source_file_ids:
+            search_query = search_query.filter(MemoryUnit.file_id.in_(source_file_ids))
+        rows = search_query.order_by("distance").limit(top_k).all()
+        lexical_units = self._search_lexical_units(
+            db=db,
+            project_id=project_id,
+            query=query,
+            source_file_ids=source_file_ids,
+            exclude_ids=[],
+            top_k=max(0, settings.retrieval_lexical_top_k),
+        )
+        lexical_ids = {unit.id for unit, _ in lexical_units}
+        retrieved_units = []
+        seen_unit_ids = set()
+        for unit, lexical_score in lexical_units:
+            retrieved_units.append(
+                {
+                    **self._serialize_unit(unit),
+                    "score": round(lexical_score, 4),
+                    "retrieval_source": "lexical",
+                }
+            )
+            seen_unit_ids.add(unit.id)
+        for unit, distance in rows:
+            if unit.id in seen_unit_ids:
+                continue
+            retrieved_units.append(
+                {
+                    **self._serialize_unit(unit),
+                    "score": round(max(0.0, 1.0 - float(distance)), 4),
+                    "retrieval_source": "vector",
+                }
+            )
+            seen_unit_ids.add(unit.id)
+        seed_units = [unit for unit, _ in lexical_units] + [unit for unit, _ in rows if unit.id not in lexical_ids]
+        expanded_units = self._expand_retrieved_units(
+            db=db,
+            project_id=project_id,
+            seed_units=seed_units,
+            source_file_ids=source_file_ids,
+            existing_ids=[item["id"] for item in retrieved_units],
+        )
+        for unit, retrieval_source in expanded_units:
+            retrieved_units.append(
+                {
+                    **self._serialize_unit(unit),
+                    "score": 0.0,
+                    "retrieval_source": retrieval_source,
+                }
+            )
         trace_steps = [
-            {"title": "Recall", "detail": f"Retrieved {len(retrieved_units)} memory units from pgvector."},
+            {
+                "title": "Recall",
+                "detail": (
+                    f"Retrieved {len(rows)} memory units from pgvector and {len(lexical_units)} lexical exact-match units"
+                    + (f" within source file '{source_name}'." if source_file_ids else ".")
+                ),
+            },
             {
                 "title": "Expand",
-                "detail": "Expanded through local logical relations in Neo4j to build a reasoning-ready subgraph.",
+                "detail": (
+                    f"Expanded to {len(retrieved_units)} evidence units using graph-related units "
+                    "and adjacent source chunks."
+                ),
             },
             {
                 "title": "Select",
@@ -243,6 +294,143 @@ class MemoryService:
                 [item.get("semantic_labels", {}) for item in retrieved_units]
             ),
         }
+
+    def _source_file_ids(self, db: Session, project_id: str, source_name: str | None) -> List[str]:
+        normalized = (source_name or "").strip()
+        if not normalized:
+            return []
+        rows = (
+            db.query(SourceFile.id)
+            .filter(SourceFile.project_id == project_id, SourceFile.filename == normalized)
+            .all()
+        )
+        if not rows:
+            rows = (
+                db.query(SourceFile.id)
+                .filter(SourceFile.project_id == project_id, SourceFile.filename.ilike(f"%{normalized}%"))
+                .all()
+            )
+        return [row[0] for row in rows]
+
+    def _expand_retrieved_units(
+        self,
+        db: Session,
+        project_id: str,
+        seed_units: Sequence[MemoryUnit],
+        source_file_ids: Sequence[str],
+        existing_ids: Sequence[str],
+    ) -> List[tuple[MemoryUnit, str]]:
+        seen = set(existing_ids)
+        expanded: List[tuple[MemoryUnit, str]] = []
+        radius = max(0, settings.retrieval_adjacent_chunk_radius)
+        if radius:
+            for unit in seed_units:
+                chunk_index = (unit.metadata_json or {}).get("chunk_index")
+                page = (unit.metadata_json or {}).get("page")
+                if unit.file_id and isinstance(chunk_index, int):
+                    neighbor_query = (
+                        db.query(MemoryUnit)
+                        .filter(MemoryUnit.project_id == project_id, MemoryUnit.file_id == unit.file_id)
+                    )
+                    if isinstance(page, int):
+                        neighbor_query = neighbor_query.filter(
+                            MemoryUnit.metadata_json["page"].as_integer().between(page - radius, page + radius)
+                        )
+                    neighbor_query = neighbor_query.filter(
+                        MemoryUnit.metadata_json["chunk_index"].as_integer().between(chunk_index - radius, chunk_index + radius)
+                    ).order_by(
+                        MemoryUnit.metadata_json["page"].as_integer(),
+                        MemoryUnit.metadata_json["chunk_index"].as_integer(),
+                    )
+                    neighbors = neighbor_query.all()
+                    for neighbor in neighbors:
+                        if neighbor.id in seen:
+                            continue
+                        seen.add(neighbor.id)
+                        expanded.append((neighbor, "adjacent_chunk"))
+
+        graph_limit = max(0, settings.retrieval_graph_unit_limit)
+        graph_ids = self.graph_service.get_related_unit_ids(project_id, [unit.id for unit in seed_units], graph_limit)
+        if graph_ids:
+            graph_query = db.query(MemoryUnit).filter(MemoryUnit.project_id == project_id, MemoryUnit.id.in_(graph_ids))
+            if source_file_ids:
+                graph_query = graph_query.filter(MemoryUnit.file_id.in_(list(source_file_ids)))
+            graph_units = graph_query.all()
+            graph_lookup = {unit.id: unit for unit in graph_units}
+            for unit_id in graph_ids:
+                unit = graph_lookup.get(unit_id)
+                if not unit or unit.id in seen:
+                    continue
+                seen.add(unit.id)
+                expanded.append((unit, "graph"))
+        return expanded
+
+    def _search_lexical_units(
+        self,
+        db: Session,
+        project_id: str,
+        query: str,
+        source_file_ids: Sequence[str],
+        exclude_ids: Sequence[str],
+        top_k: int,
+    ) -> List[tuple[MemoryUnit, float]]:
+        if top_k <= 0:
+            return []
+        terms = self._query_terms(query)
+        if not terms:
+            return []
+        candidates_query = db.query(MemoryUnit).filter(MemoryUnit.project_id == project_id)
+        if source_file_ids:
+            candidates_query = candidates_query.filter(MemoryUnit.file_id.in_(list(source_file_ids)))
+        if exclude_ids:
+            candidates_query = candidates_query.filter(~MemoryUnit.id.in_(list(exclude_ids)))
+        candidates = candidates_query.all()
+        scored: List[tuple[float, MemoryUnit]] = []
+        for unit in candidates:
+            haystack = f"{unit.summary or ''} {unit.text or ''}".lower()
+            score = 0.0
+            for term in terms:
+                if term in haystack:
+                    score += 1.0
+                    if term.isdigit() or any(char.isdigit() for char in term):
+                        score += 0.5
+            if score:
+                score += min(len(set(terms)) / 20.0, 0.5)
+                scored.append((score, unit))
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [(unit, score) for score, unit in scored[:top_k]]
+
+    def _query_terms(self, query: str) -> List[str]:
+        stopwords = {
+            "the",
+            "and",
+            "for",
+            "with",
+            "what",
+            "does",
+            "how",
+            "this",
+            "that",
+            "from",
+            "paper",
+            "according",
+            "compare",
+            "compared",
+            "under",
+            "same",
+            "which",
+            "when",
+        }
+        terms = []
+        seen = set()
+        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9_.%+-]*", query.lower()):
+            if len(token) < 3 and not any(char.isdigit() for char in token):
+                continue
+            if token in stopwords or token in seen:
+                continue
+            seen.add(token)
+            terms.append(token)
+        return terms[:24]
 
     def _chunk_capture_text(self, text: str) -> List[Dict[str, Any]]:
         stripped = sanitize_text(text).strip()
