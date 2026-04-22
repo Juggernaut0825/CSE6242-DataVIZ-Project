@@ -37,11 +37,11 @@ class Settings(BaseSettings):
     answer_context_char_budget: int = 14000
     answer_evidence_chars_per_unit: int = 1600
     graph_expansion_hops: int = 2
-    chunk_size: int = 900
+    chunk_size: int = 1600
     chunk_overlap: int = 150
     semantic_zoom_default: str = "macro"
     semantic_llm_enabled: bool = True
-    semantic_llm_file_sample_ratio: float = 0.34
+    semantic_llm_file_sample_ratio: float = 0.20
     semantic_llm_file_sample_min: int = 8
     semantic_llm_file_sample_max: int = 0
     semantic_llm_selection_strategy: str = "mmr"

@@ -276,7 +276,7 @@ PaperMem uses a hybrid semantic-labeling strategy so ingestion remains practical
 
 Every uploaded file chunk becomes a `MemoryUnit`, receives an embedding, is stored in `Postgres`, and is written into the `Neo4j` graph. The system does **not** drop unsampled chunks from graph retrieval. Instead, chunks differ only in how their semantic labels are produced:
 
-- roughly one third of file chunks receive higher-quality LLM semantic labels
+- roughly one fifth of file chunks receive higher-quality LLM semantic labels
 - the remaining chunks receive fast local fallback labels
 - all chunks still participate in vector retrieval, graph rendering, graph expansion, and evidence selection
 
@@ -288,7 +288,7 @@ The local fallback path is rule-based and runs without remote LLM calls. It spli
 
 The main controls are:
 
-- `SEMANTIC_LLM_FILE_SAMPLE_RATIO`, default `0.34`, controls the target fraction of file chunks that receive LLM labels
+- `SEMANTIC_LLM_FILE_SAMPLE_RATIO`, default `0.20`, controls the target fraction of file chunks that receive LLM labels
 - `SEMANTIC_LLM_FILE_SAMPLE_MIN`, default `8`, keeps small files from being under-labeled
 - `SEMANTIC_LLM_FILE_SAMPLE_MAX`, default `0`, means no maximum cap
 - `SEMANTIC_LLM_SELECTION_STRATEGY=mmr` enables salience plus embedding-diversity selection

@@ -57,40 +57,48 @@ const citationDisplayText = (search, citation) => {
   return matchedUnit?.text || citation.summary || ""
 }
 
-/** Nodes/edges involved in retrieval: query + memory units + one-hop neighbors in the overlay subgraph. */
+const RETRIEVAL_HIGHLIGHT_MIN_SCORE = 0.4
+const RETRIEVAL_HIGHLIGHT_MAX_UNITS = 8
+const RETRIEVAL_HIGHLIGHT_FALLBACK_UNITS = 3
+
+const selectHighlightedEvidenceUnits = (search) => {
+  const units = (search?.retrieved_units || []).filter((unit) => unit?.id)
+  const scored = units.filter((unit) => Number(unit.score || 0) >= RETRIEVAL_HIGHLIGHT_MIN_SCORE)
+  const selected = scored.length ? scored : units.slice(0, RETRIEVAL_HIGHLIGHT_FALLBACK_UNITS)
+  return selected.slice(0, RETRIEVAL_HIGHLIGHT_MAX_UNITS)
+}
+
+/** Highlight only the highest-confidence retrieved evidence nodes, not every recalled unit. */
 const computeRetrievalHighlight = (payload) => {
   const overlay = payload?.overlay
   if (!overlay?.nodes?.length) {
     return null
   }
-  const unitIds = new Set((payload.retrieved_units || []).map((u) => u.id))
+  const unitIds = new Set(selectHighlightedEvidenceUnits(payload).map((u) => u.id))
   const queryNode = (overlay.nodes || []).find(
     (n) => n.kind === "query" || String(n.id).startsWith("query:")
   )
-  const core = new Set(unitIds)
+  const nodeIds = new Set(unitIds)
   if (queryNode?.id) {
-    core.add(queryNode.id)
+    nodeIds.add(queryNode.id)
   }
-  const nodeIds = new Set(core)
   const edgeIds = new Set()
   for (const edge of overlay.edges || []) {
-    if (core.has(edge.source) || core.has(edge.target)) {
+    if (nodeIds.has(edge.source) && nodeIds.has(edge.target)) {
       if (edge.id) {
         edgeIds.add(edge.id)
       }
-      nodeIds.add(edge.source)
-      nodeIds.add(edge.target)
     }
   }
   return { nodeIds: Array.from(nodeIds), edgeIds: Array.from(edgeIds) }
 }
 
-/** Node ids to zoom onto when expanding Evidence (query + retrieved memory units). */
+/** Node ids to zoom onto when expanding Evidence (query + highlighted evidence units). */
 const computeEvidenceFitNodeIds = (search) => {
   if (!search?.overlay?.nodes) {
     return []
   }
-  const unitIds = (search.retrieved_units || []).map((u) => u.id).filter(Boolean)
+  const unitIds = selectHighlightedEvidenceUnits(search).map((u) => u.id).filter(Boolean)
   const queryNode = (search.overlay.nodes || []).find(
     (n) => n.kind === "query" || String(n.id).startsWith("query:")
   )
