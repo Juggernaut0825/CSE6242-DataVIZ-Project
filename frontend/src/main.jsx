@@ -3,6 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+window.addEventListener("error", (event) => {
+  console.error("PaperMem uncaught UI error", event.error || event.message)
+})
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("PaperMem unhandled promise rejection", event.reason)
+})
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)

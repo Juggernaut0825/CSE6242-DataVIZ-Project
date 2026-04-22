@@ -32,6 +32,24 @@ const safeParse = (value) => {
   }
 }
 
+const readJsonResponse = async (response, fallback = null) => {
+  const raw = await response.text()
+  if (!raw.trim()) {
+    return fallback
+  }
+  try {
+    return JSON.parse(raw)
+  } catch (error) {
+    console.error("Failed to parse API response", {
+      status: response.status,
+      url: response.url,
+      body: raw.slice(0, 500),
+      error,
+    })
+    return fallback
+  }
+}
+
 const truncate = (value, max = 40) => {
   if (!value) {
     return ""
@@ -365,7 +383,7 @@ function App() {
       if (!response.ok) {
         return
       }
-      const data = await response.json()
+      const data = await readJsonResponse(response, [])
       setProjects(data)
       if (data.length && !activeProjectId) {
         setActiveProjectId(data[0].id)
@@ -387,7 +405,10 @@ function App() {
     if (!response.ok) {
       return null
     }
-    const session = await response.json()
+    const session = await readJsonResponse(response)
+    if (!session?.id) {
+      return null
+    }
     setChatSessions((prev) => [session, ...prev.map((item) => ({ ...item, is_current: false }))])
     setActiveSessionId(session.id)
     setMessages([])
@@ -407,7 +428,7 @@ function App() {
         if (!response.ok) {
           return
         }
-        const data = await response.json()
+        const data = await readJsonResponse(response, [])
         if (!data.length) {
           const created = await createChatSession(projectId)
           if (created) {
@@ -439,7 +460,10 @@ function App() {
     if (!response.ok) {
       return
     }
-    const activated = await response.json()
+    const activated = await readJsonResponse(response)
+    if (!activated?.id) {
+      return
+    }
     setChatSessions((prev) =>
       prev.map((session) => ({
         ...session,
@@ -466,7 +490,7 @@ function App() {
       if (!response.ok) {
         return
       }
-      const data = await response.json()
+      const data = await readJsonResponse(response, [])
       setMessages(
         data.map((message) => ({
           ...message,
@@ -494,7 +518,11 @@ function App() {
           setGraphError("Graph load failed")
           return
         }
-        const data = await response.json()
+        const data = await readJsonResponse(response)
+        if (!data) {
+          setGraphError("Graph load failed")
+          return
+        }
         setGlobalGraph(data)
       } catch {
         setGraphError("Graph load failed")
@@ -550,7 +578,7 @@ function App() {
       if (!response.ok) {
         return
       }
-      const payload = await response.json()
+      const payload = await readJsonResponse(response, {})
       setChatSessions((prev) => prev.filter((session) => session.id !== sessionId))
       if (activeSessionId === sessionId) {
         setActiveSessionId(payload.next_session_id || "")
@@ -916,7 +944,10 @@ function App() {
     if (!response.ok) {
       return
     }
-    const project = await response.json()
+    const project = await readJsonResponse(response)
+    if (!project?.id) {
+      return
+    }
     setProjects((prev) => [project, ...prev])
     setActiveProjectId(project.id)
     setIsProjectModalOpen(false)

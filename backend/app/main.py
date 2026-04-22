@@ -457,7 +457,10 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
         "Answer only from the retrieved evidence. "
         "When the question asks for numbers, benchmark scores, definitions, datasets, or named methods, "
         "copy those details exactly from the evidence. "
-        "If the evidence does not contain the requested detail, say that it is not found instead of guessing. "
+        "For broad entity questions, if the evidence describes the entity's role, actions, outputs, or relationships, "
+        "answer with how the entity is presented in the evidence instead of requiring a dictionary-style definition. "
+        "If the evidence gives partial but relevant context, answer the supported part and explicitly say what is missing. "
+        "Only say that information is not found when the retrieved evidence contains no relevant facts for the question. "
         "Keep the answer concise and cite evidence bracket numbers when useful."
     )
     agent = ReasonerAgent(system_prompt=system_prompt, model_provider=settings.llm_model)
@@ -474,7 +477,8 @@ async def chat_stream(payload: Dict[str, Any], db: Session = Depends(get_db)) ->
         try:
             async for chunk in agent.stream(
                 f"User query:\n{query}\n\nRetrieved evidence:\n{context_text}\n\n"
-                "Give the final answer. Do not add claims that are not supported by the retrieved evidence."
+                "Give the final answer. Do not add claims that are not supported by the retrieved evidence. "
+                "Prefer a partial grounded answer over a blanket not-found response when the evidence is relevant but incomplete."
             ):
                 if chunk.get("type") == "content_chunk":
                     full_content += chunk.get("content", "")

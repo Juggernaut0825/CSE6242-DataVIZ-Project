@@ -396,6 +396,29 @@ const createWindow = () => {
     mainWindow.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"))
   }
 
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error("[paperMem] renderer process gone", details)
+  })
+
+  mainWindow.webContents.on("unresponsive", () => {
+    console.error("[paperMem] main window became unresponsive")
+  })
+
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    console.error("[paperMem] main window failed to load", {
+      errorCode,
+      errorDescription,
+      validatedURL,
+    })
+  })
+
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    if (level < 2) {
+      return
+    }
+    console.error("[paperMem] renderer console", { level, message, line, sourceId })
+  })
+
   mainWindow.on("closed", () => {
     mainWindow = null
     closeAuxiliaryWindows()
